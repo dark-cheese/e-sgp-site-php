@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>e-SGP - Baixas</title>
-    <link rel="stylesheet" href="../fonts/css/all.min.css">
-    <link rel="stylesheet" href="../css/main.css">
-    <link rel="stylesheet" href="../css/dashboard.css">
+    <title>e-SGP - Responsáveis</title>
+    <link rel="stylesheet" href="fonts/css/all.min.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/dashboard.css">
 </head>
 <body>
     <div class="dashboard">
@@ -23,9 +23,9 @@
                 <a href="unidades.html" class="menu-item"><i class="fas fa-school"></i><span>Unidades</span></a>
                 <a href="locais.html" class="menu-item"><i class="fas fa-door-open"></i><span>Departamentos</span></a>
                 <a href="itens.html" class="menu-item"><i class="fas fa-boxes"></i><span>Patrimônio</span></a>
-                <a href="responsaveis.html" class="menu-item"><i class="fas fa-user-check"></i><span>Responsáveis</span></a>
+                <a href="responsaveis.html" class="menu-item active"><i class="fas fa-user-check"></i><span>Responsáveis</span></a>
                 <a href="inventarios.html" class="menu-item"><i class="fas fa-clipboard-list"></i><span>Inventários</span></a>
-                <a href="baixas.html" class="menu-item active"><i class="fas fa-file-alt"></i><span>Baixas</span></a>
+                <a href="baixas.html" class="menu-item"><i class="fas fa-file-alt"></i><span>Baixas</span></a>
                 <a href="historicos.html" class="menu-item"><i class="fas fa-history"></i><span>Histórico</span></a>
             </nav>
             <div class="user-info">
@@ -39,29 +39,28 @@
         <main class="main-content">
             <header class="header">
                 <div class="page-title">
-                    <h1>Baixas</h1>
-                    <div class="breadcrumb"><span>Baixas</span></div>
+                    <h1>Responsáveis</h1>
+                    <div class="breadcrumb"><span>Responsáveis</span></div>
                 </div>
                 <div class="date-display"></div>
             </header>
             <div class="card">
                 <div class="card-header">
-                    <h2>Registros de Baixa</h2>
-                    <button class="btn btn-primary" onclick="window.location.href='nova-baixa.html'">Nova Baixa</button>
+                    <h2>Lista de Responsáveis</h2>
+                    <button class="btn btn-primary" onclick="window.location.href='novo-responsavel.html'">Novo Responsável</button>
                 </div>
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>Item</th>
-                            <th>Tipo</th>
-                            <th>Data</th>
-                            <th>Justificativa</th>
+                            <th>Nome</th>
+                            <th>Cargo</th>
+                            <th>Usuário Vinculado</th>
                             <th>Ações</th>
                         </tr>
                     </thead>
-                    <tbody id="baixasTableBody">
+                    <tbody id="responsavelTableBody">
                         <tr>
-                            <td colspan="5">Carregando baixas...</td>
+                            <td colspan="4">Carregando responsáveis...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -69,54 +68,38 @@
         </main>
     </div>
     <script>
-        function apiBaseUrl() {
-            if (typeof getApiBaseUrl === 'function') {
-                return getApiBaseUrl();
-            }
-            var path = window.location.pathname;
-            var index = path.indexOf('/frontend/');
-            if (index !== -1) {
-                return path.substring(0, index) + '/backend/api';
-            }
-            return '/backend/api';
-        }
-
-        async function carregarBaixas() {
+        async function carregarResponsaveisLista() {
             try {
-                const response = await fetch(apiBaseUrl() + '/baixas.php');
-                const result = await response.json();
-                const tbody = document.getElementById('baixasTableBody');
+                const response = await fetch(getApiBaseUrl() + '/responsaveis.php');
+                const data = await response.json();
+                const tbody = document.getElementById('responsavelTableBody');
                 tbody.innerHTML = '';
-
-                if (!result.success) {
-                    tbody.innerHTML = '<tr><td colspan="5">' + (result.message || 'Erro ao carregar baixas.') + '</td></tr>';
+                if (!data.success) {
+                    tbody.innerHTML = '<tr><td colspan="4">' + (data.message || 'Erro ao carregar responsáveis.') + '</td></tr>';
                     return;
                 }
-
-                if (!result.data || result.data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5">Nenhuma baixa registrada.</td></tr>';
+                if (!data.data || data.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4">Nenhum responsável cadastrado.</td></tr>';
                     return;
                 }
-
-                result.data.forEach(function (baixa) {
-                    const itemLabel = baixa.itemNumero ? baixa.itemNumero + ' - ' + (baixa.itemDescricao || '') : '(sem item)';
+                data.data.forEach(function (responsavel) {
+                    const email = responsavel.email ? responsavel.email : '';
                     const row = document.createElement('tr');
-                    row.innerHTML = '<td>' + itemLabel + '</td>' +
-                        '<td>' + (baixa.tipo || '') + '</td>' +
-                        '<td>' + (baixa.dataBaixa || '') + '</td>' +
-                        '<td>' + (baixa.justificativa || '') + '</td>' +
+                    row.innerHTML = '<td>' + (responsavel.nome || '') + '</td>' +
+                        '<td>' + (responsavel.cargo || '') + '</td>' +
+                        '<td>' + email + '</td>' +
                         '<td><button class="action-btn">Ver</button></td>';
                     tbody.appendChild(row);
                 });
             } catch (error) {
-                const tbody = document.getElementById('baixasTableBody');
-                tbody.innerHTML = '<tr><td colspan="5">Erro ao carregar baixas.</td></tr>';
+                const tbody = document.getElementById('responsavelTableBody');
+                tbody.innerHTML = '<tr><td colspan="4">Erro ao carregar responsáveis.</td></tr>';
                 console.error(error);
             }
         }
 
-        document.addEventListener('DOMContentLoaded', carregarBaixas);
+        document.addEventListener('DOMContentLoaded', carregarResponsaveisLista);
     </script>
-    <script src="../js/main.js"></script>
+    <script src="js/main.js"></script>
 </body>
 </html>

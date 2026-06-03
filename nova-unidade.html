@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>e-SGP - Novo Departamento</title>
+    <title>e-SGP - Nova Unidade</title>
     
     <!-- Ícones -->
-    <link rel="stylesheet" href="../fonts/css/all.min.css">
+    <link rel="stylesheet" href="fonts/css/all.min.css">
     
     <!-- CSS -->
-    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="css/main.css">
     <style>
         .form-container {
             max-width: 600px;
@@ -37,19 +37,6 @@
         .btn-back:hover {
             background: var(--cinza-escuro);
         }
-        
-        .info-unidade {
-            background: var(--cinza-claro);
-            padding: 12px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-            font-size: 13px;
-        }
-        
-        .info-unidade i {
-            color: var(--azul);
-            margin-right: 5px;
-        }
     </style>
 </head>
 <body>
@@ -67,8 +54,8 @@
             <nav class="menu">
                 <a href="dashboard.html" class="menu-item"><i class="fas fa-home"></i> Dashboard</a>
                 <a href="secretarias.html" class="menu-item"><i class="fas fa-landmark"></i> Secretarias</a>
-                <a href="unidades.html" class="menu-item"><i class="fas fa-school"></i> Unidades</a>
-                <a href="locais.html" class="menu-item active"><i class="fas fa-door-open"></i> Departamentos</a>
+                <a href="unidades.html" class="menu-item active"><i class="fas fa-school"></i> Unidades</a>
+                <a href="locais.html" class="menu-item"><i class="fas fa-door-open"></i> Departamentos</a>
                 <a href="itens.html" class="menu-item"><i class="fas fa-boxes"></i> Patrimônio</a>
                 <a href="responsaveis.html" class="menu-item"><i class="fas fa-user-check"></i> Responsáveis</a>
                 <a href="inventarios.html" class="menu-item"><i class="fas fa-clipboard-list"></i> Inventários</a>
@@ -88,53 +75,49 @@
         <main class="main-content">
             <header class="header">
                 <div class="page-title">
-                    <h1>Novo Departamento</h1>
+                    <h1>Nova Unidade</h1>
                     <div class="breadcrumb">
-                        <a href="locais.html">Departamentos</a>
+                        <a href="unidades.html">Unidades</a>
                         <i class="fas fa-chevron-right"></i>
-                        <span>Novo Departamento</span>
+                        <span>Nova Unidade</span>
                     </div>
                 </div>
             </header>
 
             <div class="card form-container">
                 <div class="form-title">
-                    <i class="fas fa-door-open"></i>
-                    <h2>Cadastrar Novo Departamento</h2>
-                </div>
-                
-                <div class="info-unidade">
                     <i class="fas fa-school"></i>
-                    <strong>Unidade:</strong> Escola Municipal Pedro Álvares
+                    <h2>Cadastrar Nova Unidade</h2>
                 </div>
                 
-                <form onsubmit="event.preventDefault(); salvarDepartamento()">
+                <form onsubmit="event.preventDefault(); salvarUnidade()">
                     <div class="form-group">
-                        <label>Nome do Departamento *</label>
-                        <input type="text" id="nome" placeholder="Ex: Diretoria Escolar, Almoxarifado, Biblioteca..." required>
+                        <label>Nome da Unidade *</label>
+                        <input type="text" id="nome" placeholder="Ex: Escola Municipal Pedro Álvares" required>
                     </div>
                     
                     <div class="form-group">
-                        <label>Unidade *</label>
-                        <select id="unidade" required>
-                            <option value="">Selecione uma unidade...</option>
+                        <label>Secretaria *</label>
+                        <select id="secretaria" required>
+                            <option value="">Selecione uma secretaria...</option>
                         </select>
                     </div>
                     
                     <div class="form-group">
+                        <label>Endereço</label>
+                        <input type="text" id="endereco" placeholder="Rua, número, bairro...">
+                    </div>
+                    
+                    <div class="form-group">
+                        <!-- Modificado: responsavelId agora é selecionado por dropdown em vez de texto livre -->
                         <label>Responsável</label>
-                        <select id="responsavel">
+                        <select id="responsavel" required>
                             <option value="">Selecione um responsável...</option>
                         </select>
                     </div>
                     
-                    <div class="form-group">
-                        <label>Descrição</label>
-                        <textarea id="descricao" rows="3" placeholder="Descrição opcional do departamento"></textarea>
-                    </div>
-                    
                     <div class="form-actions">
-                        <button type="button" class="btn btn-back" onclick="window.location.href='locais.html'">
+                        <button type="button" class="btn btn-back" onclick="window.location.href='unidades.html'">
                             <i class="fas fa-arrow-left"></i> Voltar
                         </button>
                         <button type="submit" class="btn btn-primary">
@@ -159,25 +142,25 @@
             return '/backend/api';
         }
 
-        async function carregarOpcoesDepartamento() {
+        async function carregarOpcoesUnidade() {
             try {
-                const [unidadesResponse, responsaveisResponse] = await Promise.all([
-                    fetch(apiBaseUrl() + '/unidades.php'),
+                const [secretariasResponse, responsaveisResponse] = await Promise.all([
+                    fetch(apiBaseUrl() + '/secretarias.php'),
                     fetch(apiBaseUrl() + '/responsaveis.php')
                 ]);
 
-                const unidadesData = await unidadesResponse.json();
+                const secretariasData = await secretariasResponse.json();
                 const responsaveisData = await responsaveisResponse.json();
 
-                const unidadeSelect = document.getElementById('unidade');
+                const secretariaSelect = document.getElementById('secretaria');
                 const responsavelSelect = document.getElementById('responsavel');
 
-                if (unidadesData.success) {
-                    unidadesData.data.forEach(function (unidade) {
+                if (secretariasData.success) {
+                    secretariasData.data.forEach(function (secretaria) {
                         const option = document.createElement('option');
-                        option.value = unidade.id;
-                        option.textContent = unidade.nome;
-                        unidadeSelect.appendChild(option);
+                        option.value = secretaria.id;
+                        option.textContent = secretaria.nome;
+                        secretariaSelect.appendChild(option);
                     });
                 }
 
@@ -194,50 +177,52 @@
             }
         }
 
-        async function salvarDepartamento() {
+        async function salvarUnidade() {
             const nome = document.getElementById('nome').value.trim();
-            const unidadeId = document.getElementById('unidade').value;
-            const responsavelId = document.getElementById('responsavel').value;
+            const secretaria = document.getElementById('secretaria').value;
+            const endereco = document.getElementById('endereco').value.trim();
+            const responsavel = document.getElementById('responsavel').value;
 
             if (!nome) {
-                alert('Por favor, preencha o nome do departamento!');
+                alert('Por favor, preencha o nome da unidade!');
                 return;
             }
 
-            if (!unidadeId) {
-                alert('Por favor, selecione uma unidade!');
+            if (!secretaria) {
+                alert('Por favor, selecione uma secretaria!');
                 return;
             }
 
             try {
-                const response = await fetch(apiBaseUrl() + '/locais.php', {
+                const response = await fetch(apiBaseUrl() + '/unidades.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         nome: nome,
-                        unidadeId: unidadeId,
-                        responsavelId: responsavelId
+                        secretariaId: secretaria,
+                        endereco: endereco,
+                        responsavelId: responsavel
                     })
                 });
 
                 const data = await response.json();
                 if (!data.success) {
-                    throw new Error(data.message || 'Não foi possível cadastrar o departamento.');
+                    throw new Error(data.message || 'Não foi possível cadastrar a unidade.');
                 }
 
                 alert(data.message);
-                window.location.href = 'locais.html';
+                window.location.href = 'unidades.html';
             } catch (error) {
                 console.error(error);
-                alert('Erro ao salvar departamento:\n' + error.message);
+                alert('Erro ao salvar unidade:\n' + error.message);
             }
         }
 
-        document.addEventListener('DOMContentLoaded', carregarOpcoesDepartamento);
+        document.addEventListener('DOMContentLoaded', carregarOpcoesUnidade);
     </script>
     
-    <script src="../js/main.js"></script>
+    <script src="js/main.js"></script>
 </body>
 </html>

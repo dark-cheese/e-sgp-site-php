@@ -15,14 +15,7 @@ function saudacao() {
     return 'Boa noite';
 }
 
-function getApiBaseUrl() {
-    var path = window.location.pathname;
-    var index = path.indexOf('/frontend/');
-    if (index !== -1) {
-        return path.substring(0, index) + '/backend/api';
-    }
-    return '/backend/api';
-}
+function getApiBaseUrl() { return '/backend/api'; }
 
 document.addEventListener('DOMContentLoaded', function () {
 

@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>e-SGP - Itens</title>
+    <title>e-SGP - Unidades</title>
     
     <!-- Ícones -->
-    <link rel="stylesheet" href="../fonts/css/all.min.css">
+    <link rel="stylesheet" href="fonts/css/all.min.css">
     
     <!-- CSS -->
-    <link rel="stylesheet" href="../css/main.css">
-    <link rel="stylesheet" href="../css/itens.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/unidades.css">
 </head>
 <body>
     <div class="dashboard">
@@ -27,9 +27,9 @@
             <nav class="menu">
                 <a href="dashboard.html" class="menu-item"><i class="fas fa-home"></i> Dashboard</a>
                 <a href="secretarias.html" class="menu-item"><i class="fas fa-landmark"></i> Secretarias</a>
-                <a href="unidades.html" class="menu-item"><i class="fas fa-school"></i> Unidades</a>
+                <a href="unidades.html" class="menu-item active"><i class="fas fa-school"></i> Unidades</a>
                 <a href="locais.html" class="menu-item"><i class="fas fa-door-open"></i> Departamentos</a>
-                <a href="itens.html" class="menu-item active"><i class="fas fa-boxes"></i> Patrimônio</a>
+                <a href="itens.html" class="menu-item"><i class="fas fa-boxes"></i> Patrimônio</a>
                 <a href="responsaveis.html" class="menu-item"><i class="fas fa-user-check"></i> Responsáveis</a>
                 <a href="inventarios.html" class="menu-item"><i class="fas fa-clipboard-list"></i> Inventários</a>
                 <a href="baixas.html" class="menu-item"><i class="fas fa-file-alt"></i> Baixas</a>
@@ -48,57 +48,59 @@
         <main class="main-content">
             <header class="header">
                 <div class="page-title">
-                    <h1>Itens Patrimoniais</h1>
+                    <h1>Unidades</h1>
                     <div class="breadcrumb">
-                        <a href="secretarias.html">Educação</a>
+                        <a href="secretarias.html">Secretarias</a>
                         <i class="fas fa-chevron-right"></i>
-                        <a href="unidades.html">E.M. Pedro</a>
-                        <i class="fas fa-chevron-right"></i>
-                        <a href="locais.html">Sala 1</a>
-                        <i class="fas fa-chevron-right"></i>
-                        <span>Itens</span>
+                        <span>Unidades</span>
                     </div>
                 </div>
-                <div class="action-group">
-                    <button class="btn btn-primary" onclick="window.location.href='novo-item.html'">
-                        <i class="fas fa-plus"></i> Novo
-                    </button>
-                </div>
+                <button class="btn btn-primary" onclick="window.location.href='nova-unidade.html'">
+                    <i class="fas fa-plus"></i> Nova
+                </button>
             </header>
 
             <div class="filter-section">
                 <div class="filter-row">
-                    <input type="text" placeholder="Buscar por nº patrimônio ou descrição...">
                     <select>
-                        <option>Todos os estados</option>
-                        <option>Ótimo</option>
-                        <option>Bom</option>
-                        <option>Regular</option>
-                        <option>Ruim</option>
+                        <option>Todas as Secretarias</option>
+                        <option>Educação</option>
+                        <option>Saúde</option>
                     </select>
+                    <input type="text" placeholder="Buscar unidade...">
                     <button class="btn btn-primary">Filtrar</button>
                 </div>
             </div>
 
-            <div class="items-summary">
-                <span><strong>Total de itens:</strong> 345</span>
-                <span><strong>Valor total:</strong> R$ 450.000,00</span>
+            <div class="stats-cards">
+                <div class="card">
+                    <div class="stat-number">12</div>
+                    <p>Total de Unidades</p>
+                </div>
+                <div class="card">
+                    <div class="stat-number">8</div>
+                    <p>Escolas</p>
+                </div>
+                <div class="card">
+                    <div class="stat-number">4</div>
+                    <p>Postos</p>
+                </div>
             </div>
 
             <table>
                 <thead>
                     <tr>
-                        <th>Nº Patrimônio</th>
-                        <th>Descrição</th>
-                        <th>Local</th>
-                        <th>Estado</th>
+                        <th>Unidade</th>
+                        <th>Secretaria</th>
+                        <th>Departamentos</th>
+                        <th>Itens</th>
                         <th>Responsável</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
-                <tbody id="itensTableBody">
+                <tbody id="unidadeTableBody">
                     <tr>
-                        <td colspan="6">Carregando itens...</td>
+                        <td colspan="6">Carregando unidades...</td>
                     </tr>
                 </tbody>
             </table>
@@ -107,15 +109,12 @@
                 <button class="page-btn"><i class="fas fa-chevron-left"></i></button>
                 <button class="page-btn active">1</button>
                 <button class="page-btn">2</button>
-                <button class="page-btn">3</button>
-                <button class="page-btn">4</button>
-                <button class="page-btn">5</button>
                 <button class="page-btn"><i class="fas fa-chevron-right"></i></button>
             </div>
         </main>
     </div>
 
-    <script src="../js/main.js"></script>
-    <script src="../js/utils.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/utils.js"></script>
 </body>
 </html>

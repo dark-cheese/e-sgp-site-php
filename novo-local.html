@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>e-SGP - Nova Secretaria</title>
+    <title>e-SGP - Novo Departamento</title>
     
     <!-- Ícones -->
-    <link rel="stylesheet" href="../fonts/css/all.min.css">
+    <link rel="stylesheet" href="fonts/css/all.min.css">
     
     <!-- CSS -->
-    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="css/main.css">
     <style>
         .form-container {
             max-width: 600px;
@@ -37,6 +37,19 @@
         .btn-back:hover {
             background: var(--cinza-escuro);
         }
+        
+        .info-unidade {
+            background: var(--cinza-claro);
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+        
+        .info-unidade i {
+            color: var(--azul);
+            margin-right: 5px;
+        }
     </style>
 </head>
 <body>
@@ -53,9 +66,9 @@
 
             <nav class="menu">
                 <a href="dashboard.html" class="menu-item"><i class="fas fa-home"></i> Dashboard</a>
-                <a href="secretarias.html" class="menu-item active"><i class="fas fa-landmark"></i> Secretarias</a>
+                <a href="secretarias.html" class="menu-item"><i class="fas fa-landmark"></i> Secretarias</a>
                 <a href="unidades.html" class="menu-item"><i class="fas fa-school"></i> Unidades</a>
-                <a href="locais.html" class="menu-item"><i class="fas fa-door-open"></i> Departamentos</a>
+                <a href="locais.html" class="menu-item active"><i class="fas fa-door-open"></i> Departamentos</a>
                 <a href="itens.html" class="menu-item"><i class="fas fa-boxes"></i> Patrimônio</a>
                 <a href="responsaveis.html" class="menu-item"><i class="fas fa-user-check"></i> Responsáveis</a>
                 <a href="inventarios.html" class="menu-item"><i class="fas fa-clipboard-list"></i> Inventários</a>
@@ -75,42 +88,53 @@
         <main class="main-content">
             <header class="header">
                 <div class="page-title">
-                    <h1>Nova Secretaria</h1>
+                    <h1>Novo Departamento</h1>
                     <div class="breadcrumb">
-                        <a href="secretarias.html">Secretarias</a>
+                        <a href="locais.html">Departamentos</a>
                         <i class="fas fa-chevron-right"></i>
-                        <span>Nova Secretaria</span>
+                        <span>Novo Departamento</span>
                     </div>
                 </div>
             </header>
 
             <div class="card form-container">
                 <div class="form-title">
-                    <i class="fas fa-landmark"></i>
-                    <h2>Cadastrar Nova Secretaria</h2>
+                    <i class="fas fa-door-open"></i>
+                    <h2>Cadastrar Novo Departamento</h2>
                 </div>
                 
-                <form onsubmit="event.preventDefault(); salvarSecretaria()">
+                <div class="info-unidade">
+                    <i class="fas fa-school"></i>
+                    <strong>Unidade:</strong> Escola Municipal Pedro Álvares
+                </div>
+                
+                <form onsubmit="event.preventDefault(); salvarDepartamento()">
                     <div class="form-group">
-                        <label>Nome da Secretaria *</label>
-                        <input type="text" id="nome" placeholder="Ex: Secretaria de Educação" required>
+                        <label>Nome do Departamento *</label>
+                        <input type="text" id="nome" placeholder="Ex: Diretoria Escolar, Almoxarifado, Biblioteca..." required>
                     </div>
                     
                     <div class="form-group">
-                        <!-- Modificado: responsavelId agora é selecionado por dropdown em vez de texto livre -->
-                        <label>Responsável *</label>
-                        <select id="responsavel" required>
+                        <label>Unidade *</label>
+                        <select id="unidade" required>
+                            <option value="">Selecione uma unidade...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Responsável</label>
+                        <select id="responsavel">
                             <option value="">Selecione um responsável...</option>
                         </select>
                     </div>
                     
                     <div class="form-group">
                         <label>Descrição</label>
-                        <textarea rows="3" id="descricao" placeholder="Descrição da secretaria..."></textarea>
+                        <textarea id="descricao" rows="3" placeholder="Descrição opcional do departamento"></textarea>
                     </div>
                     
                     <div class="form-actions">
-                        <button type="button" class="btn btn-back" onclick="window.location.href='secretarias.html'">
+                        <button type="button" class="btn btn-back" onclick="window.location.href='locais.html'">
                             <i class="fas fa-arrow-left"></i> Voltar
                         </button>
                         <button type="submit" class="btn btn-primary">
@@ -135,71 +159,85 @@
             return '/backend/api';
         }
 
-        async function carregarResponsaveis() {
+        async function carregarOpcoesDepartamento() {
             try {
-                const response = await fetch(apiBaseUrl() + '/responsaveis.php');
-                const data = await response.json();
-                if (!data.success) {
-                    throw new Error(data.message || 'Falha ao carregar responsáveis.');
+                const [unidadesResponse, responsaveisResponse] = await Promise.all([
+                    fetch(apiBaseUrl() + '/unidades.php'),
+                    fetch(apiBaseUrl() + '/responsaveis.php')
+                ]);
+
+                const unidadesData = await unidadesResponse.json();
+                const responsaveisData = await responsaveisResponse.json();
+
+                const unidadeSelect = document.getElementById('unidade');
+                const responsavelSelect = document.getElementById('responsavel');
+
+                if (unidadesData.success) {
+                    unidadesData.data.forEach(function (unidade) {
+                        const option = document.createElement('option');
+                        option.value = unidade.id;
+                        option.textContent = unidade.nome;
+                        unidadeSelect.appendChild(option);
+                    });
                 }
 
-                const select = document.getElementById('responsavel');
-                select.innerHTML = '<option value="">Selecione um responsável...</option>';
-                data.data.forEach(function (responsavel) {
-                    const option = document.createElement('option');
-                    option.value = responsavel.id;
-                    option.textContent = responsavel.nome + (responsavel.cargo ? ' – ' + responsavel.cargo : '');
-                    select.appendChild(option);
-                });
+                if (responsaveisData.success) {
+                    responsaveisData.data.forEach(function (responsavel) {
+                        const option = document.createElement('option');
+                        option.value = responsavel.id;
+                        option.textContent = responsavel.nome;
+                        responsavelSelect.appendChild(option);
+                    });
+                }
             } catch (error) {
                 console.error(error);
-                alert('Erro ao carregar responsáveis:\n' + error.message);
             }
         }
 
-        async function salvarSecretaria() {
+        async function salvarDepartamento() {
             const nome = document.getElementById('nome').value.trim();
-            const responsavel = document.getElementById('responsavel').value;
-            const descricao = document.getElementById('descricao').value.trim();
+            const unidadeId = document.getElementById('unidade').value;
+            const responsavelId = document.getElementById('responsavel').value;
 
             if (!nome) {
-                alert('Por favor, preencha o nome da secretaria!');
+                alert('Por favor, preencha o nome do departamento!');
+                return;
+            }
+
+            if (!unidadeId) {
+                alert('Por favor, selecione uma unidade!');
                 return;
             }
 
             try {
-                const response = await fetch(apiBaseUrl() + '/secretarias.php', {
+                const response = await fetch(apiBaseUrl() + '/locais.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                         nome: nome,
-                        responsavelId: responsavel,
-                        descricao: descricao
+                        unidadeId: unidadeId,
+                        responsavelId: responsavelId
                     })
                 });
 
-                if (!response.ok) {
-                    throw new Error('Resposta inválida do servidor.');
-                }
-
                 const data = await response.json();
                 if (!data.success) {
-                    throw new Error(data.message || 'Não foi possível cadastrar a secretaria.');
+                    throw new Error(data.message || 'Não foi possível cadastrar o departamento.');
                 }
 
                 alert(data.message);
-                window.location.href = 'secretarias.html';
+                window.location.href = 'locais.html';
             } catch (error) {
                 console.error(error);
-                alert('Erro ao salvar secretaria:\n' + error.message);
+                alert('Erro ao salvar departamento:\n' + error.message);
             }
         }
 
-        document.addEventListener('DOMContentLoaded', carregarResponsaveis);
+        document.addEventListener('DOMContentLoaded', carregarOpcoesDepartamento);
     </script>
-
-    <script src="../js/main.js"></script>
+    
+    <script src="js/main.js"></script>
 </body>
 </html>

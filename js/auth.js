@@ -27,8 +27,7 @@ async function login(event) {
         return;
     }
     
-    // Caminho ABSOLUTO e COMPLETO para a InfinityFree
-	const url = '/e-sgp-site-main/backend/api/login_simple.php';    
+    const url = '/backend/api/login_simple.php';
     console.log('Tentando login em:', url);
     
     try {
@@ -49,7 +48,7 @@ async function login(event) {
         if (data.success) {
             alert('Login realizado com sucesso!');
             sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
-            window.location.href = '/e-sgp-site-main/frontend/dashboard.html';
+            window.location.href = 'dashboard.html';
         } else {
             alert(data.message || 'Erro no login!');
         }
