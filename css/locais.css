@@ -1,0 +1,54 @@
+/* ===== LOCAIS ===== */
+.unidade-header {
+    background-color: var(--branco);
+    padding: 15px 20px;
+    border-radius: 4px;
+    border: 1px solid var(--borda);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.unidade-icon {
+    width: 50px;
+    height: 50px;
+    background-color: var(--azul);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--branco);
+    font-size: 22px;
+    flex-shrink: 0;
+}
+
+.unidade-info h3 {
+    font-size: 16px;
+    margin-bottom: 4px;
+    color: var(--azul-escuro);
+}
+
+.unidade-info p {
+    color: var(--cinza);
+    font-size: 12px;
+    margin-bottom: 3px;
+}
+
+.unidade-info p i {
+    margin-right: 5px;
+    color: var(--azul);
+}
+
+.local-stats {
+    display: flex;
+    gap: 15px;
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--cinza);
+}
+
+.local-stats i {
+    color: var(--azul);
+    margin-right: 4px;
+}

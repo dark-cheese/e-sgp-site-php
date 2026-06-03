@@ -1,0 +1,61 @@
+/* ===== NOVO ITEM ===== */
+.form-section {
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--borda);
+}
+
+.form-section:last-of-type {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.form-section h3 {
+    font-size: 15px;
+    color: var(--azul-escuro);
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.form-section h3 i {
+    color: var(--azul);
+    font-size: 14px;
+}
+
+.form-row-duas-colunas {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.form-row-tres-colunas {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.readonly-field {
+    background-color: var(--cinza-claro);
+    cursor: not-allowed;
+    color: var(--cinza);
+}
+
+.form-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 25px;
+    padding-top: 15px;
+    border-top: 1px solid var(--borda);
+}
+
+@media (max-width: 768px) {
+    .form-row-duas-colunas,
+    .form-row-tres-colunas {
+        grid-template-columns: 1fr;
+    }
+}

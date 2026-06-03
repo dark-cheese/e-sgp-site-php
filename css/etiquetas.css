@@ -1,0 +1,96 @@
+/* ===== ETIQUETAS ===== */
+.selecao-info {
+    padding: 8px 0 0;
+    font-size: 13px;
+    color: var(--cinza-escuro);
+}
+
+.config-opcoes {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.config-grupo {
+    background-color: var(--cinza-claro);
+    padding: 12px;
+    border-radius: 4px;
+}
+
+.config-grupo h4 {
+    font-size: 13px;
+    margin-bottom: 10px;
+    color: var(--azul-escuro);
+}
+
+.config-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
+.config-item input[type="radio"],
+.config-item input[type="checkbox"] {
+    width: auto;
+    cursor: pointer;
+}
+
+.preview-etiquetas {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 15px;
+    margin: 15px 0;
+}
+
+.preview-item {
+    border: 1px solid var(--borda);
+    border-radius: 4px;
+    padding: 12px 8px;
+    text-align: center;
+    background-color: var(--branco);
+}
+
+.qrcode-simulado {
+    width: 60px;
+    height: 60px;
+    background-color: var(--cinza-claro);
+    margin: 0 auto 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+}
+
+.qrcode-simulado i {
+    font-size: 32px;
+    color: var(--cinza-escuro);
+}
+
+.preview-item .num-patrimonio {
+    font-weight: bold;
+    font-size: 12px;
+    margin-bottom: 3px;
+    color: var(--azul-escuro);
+}
+
+.preview-item .descricao {
+    font-size: 11px;
+    color: var(--cinza);
+}
+
+.acoes-etiquetas {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--borda);
+}
+
+@media (max-width: 768px) {
+    .config-opcoes {
+        grid-template-columns: 1fr;
+    }
+}

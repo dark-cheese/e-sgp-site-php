@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>e-SGP - Inventário</title>
+    <link rel="stylesheet" href="../fonts/css/all.min.css">
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <div class="logo-area">
+                <div class="logo-icon"><i class="fas fa-building"></i></div>
+                <div class="logo-text">
+                    <h2>e-SGP</h2>
+                </div>
+            </div>
+            <nav class="menu">
+                <a href="dashboard.html" class="menu-item"><i class="fas fa-home"></i><span>Dashboard</span></a>
+                <a href="secretarias.html" class="menu-item"><i class="fas fa-landmark"></i><span>Secretarias</span></a>
+                <a href="unidades.html" class="menu-item"><i class="fas fa-school"></i><span>Unidades</span></a>
+                <a href="locais.html" class="menu-item"><i class="fas fa-door-open"></i><span>Departamentos</span></a>
+                <a href="itens.html" class="menu-item"><i class="fas fa-boxes"></i><span>Patrimônio</span></a>
+                <a href="responsaveis.html" class="menu-item"><i class="fas fa-user-check"></i><span>Responsáveis</span></a>
+                <a href="inventarios.html" class="menu-item active"><i class="fas fa-clipboard-list"></i><span>Inventários</span></a>
+                <a href="baixas.html" class="menu-item"><i class="fas fa-file-alt"></i><span>Baixas</span></a>
+                <a href="historicos.html" class="menu-item"><i class="fas fa-history"></i><span>Histórico</span></a>
+            </nav>
+            <div class="user-info">
+                <div class="user-avatar">AD</div>
+                <div class="user-details">
+                    <h4>Admin</h4>
+                    <p>admin@prefeitura.br</p>
+                </div>
+            </div>
+        </aside>
+        <main class="main-content">
+            <header class="header">
+                <div class="page-title">
+                    <h1>Inventários</h1>
+                    <div class="breadcrumb"><span>Inventários</span></div>
+                </div>
+                <div class="date-display"></div>
+            </header>
+            <div class="card">
+                <div class="card-header">
+                    <h2>Inventários Cadastrados</h2>
+                    <button class="btn btn-primary" onclick="window.location.href='novo-inventario.html'">Novo Inventário</button>
+                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Ano</th>
+                            <th>Nome</th>
+                            <th>Unidade</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventarioTableBody">
+                        <tr>
+                            <td colspan="5">Carregando inventários...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+    <script>
+        function apiBaseUrl() {
+            if (typeof getApiBaseUrl === 'function') {
+                return getApiBaseUrl();
+            }
+            var path = window.location.pathname;
+            var index = path.indexOf('/frontend/');
+            if (index !== -1) {
+                return path.substring(0, index) + '/backend/api';
+            }
+            return '/backend/api';
+        }
+
+        async function carregarInventarios() {
+            try {
+                const response = await fetch(apiBaseUrl() + '/inventarios.php');
+                const result = await response.json();
+                const tbody = document.getElementById('inventarioTableBody');
+                tbody.innerHTML = '';
+
+                if (!result.success) {
+                    tbody.innerHTML = '<tr><td colspan="5">' + (result.message || 'Erro ao carregar inventários.') + '</td></tr>';
+                    return;
+                }
+
+                if (!result.data || result.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5">Nenhum inventário cadastrado.</td></tr>';
+                    return;
+                }
+
+                result.data.forEach(function (inventario) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = '<td>' + (inventario.ano || '') + '</td>' +
+                        '<td>' + (inventario.nome || '') + '</td>' +
+                        '<td>' + (inventario.unidade || '') + '</td>' +
+                        '<td>' + (inventario.status || '') + '</td>' +
+                        '<td><button class="action-btn">Ver</button></td>';
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                const tbody = document.getElementById('inventarioTableBody');
+                tbody.innerHTML = '<tr><td colspan="5">Erro ao carregar inventários.</td></tr>';
+                console.error(error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', carregarInventarios);
+    </script>
+    <script src="../js/main.js"></script>
+</body>
+</html>

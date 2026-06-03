@@ -1,0 +1,432 @@
+/* ===== VARIÁVEIS ===== */
+:root {
+    --azul-escuro: #1A3B5D;
+    --azul: #2A7DE1;
+    --verde: #27AE60;
+    --amarelo: #F1C40F;
+    --vermelho: #E74C3C;
+    --cinza-escuro: #2C3E50;
+    --cinza: #7F8C8D;
+    --cinza-claro: #F5F7FA;
+    --borda: #E1E8ED;
+    --branco: #FFFFFF;
+}
+
+/* ===== RESET ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: var(--cinza-claro);
+    color: var(--cinza-escuro);
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+/* ===== LAYOUT ===== */
+.dashboard {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+    width: 250px;
+    background-color: var(--azul-escuro);
+    color: var(--branco);
+    padding: 20px;
+    position: fixed;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.logo-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+.logo-icon {
+    font-size: 24px;
+    color: var(--azul);
+}
+
+.logo-text h2 {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.logo-text span {
+    font-size: 11px;
+    opacity: 0.8;
+}
+
+.menu {
+    flex: 1;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    margin: 3px 0;
+    border-radius: 4px;
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.menu-item i {
+    width: 18px;
+    font-size: 14px;
+}
+
+.menu-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--branco);
+}
+
+.menu-item.active {
+    background-color: var(--azul);
+    color: var(--branco);
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 0 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    margin-top: 10px;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    background-color: var(--azul);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.user-details h4 {
+    font-size: 13px;
+    margin-bottom: 2px;
+}
+
+.user-details p {
+    font-size: 11px;
+    opacity: 0.7;
+}
+
+/* ===== CONTEÚDO ===== */
+.main-content {
+    flex: 1;
+    margin-left: 250px;
+    padding: 20px;
+}
+
+/* ===== HEADER ===== */
+.header {
+    background-color: var(--branco);
+    padding: 15px 20px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    border: 1px solid var(--borda);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.page-title h1 {
+    font-size: 20px;
+    color: var(--azul-escuro);
+    margin-bottom: 3px;
+}
+
+.breadcrumb {
+    color: var(--cinza);
+    font-size: 12px;
+}
+
+.breadcrumb a {
+    color: var(--azul);
+    text-decoration: none;
+}
+
+.breadcrumb i {
+    margin: 0 5px;
+    font-size: 10px;
+}
+
+.date-display {
+    background-color: var(--cinza-claro);
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+/* ===== BOTÕES ===== */
+.btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-primary {
+    background-color: var(--azul);
+    color: var(--branco);
+}
+
+.btn-primary:hover {
+    background-color: var(--azul-escuro);
+}
+
+.btn-success {
+    background-color: var(--verde);
+    color: var(--branco);
+}
+
+.btn-outline {
+    background-color: transparent;
+    border: 1px solid var(--azul);
+    color: var(--azul);
+}
+
+.btn-outline:hover {
+    background-color: var(--azul);
+    color: var(--branco);
+}
+
+.btn-sm {
+    padding: 5px 12px;
+    font-size: 12px;
+}
+
+/* ===== CARD GENÉRICO ===== */
+.card {
+    background-color: var(--branco);
+    padding: 20px;
+    border-radius: 4px;
+    border: 1px solid var(--borda);
+    margin-bottom: 20px;
+}
+
+/* ===== TABELAS ===== */
+table {
+    width: 100%;
+    background-color: var(--branco);
+    border-radius: 4px;
+    border-collapse: collapse;
+    border: 1px solid var(--borda);
+    font-size: 13px;
+    margin-bottom: 20px;
+}
+
+th {
+    background-color: var(--cinza-claro);
+    padding: 12px 10px;
+    text-align: left;
+    font-weight: bold;
+    color: var(--azul-escuro);
+    border-bottom: 1px solid var(--borda);
+}
+
+td {
+    padding: 10px;
+    border-bottom: 1px solid var(--borda);
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    color: var(--cinza);
+    cursor: pointer;
+    margin: 0 3px;
+    font-size: 13px;
+}
+
+.action-btn:hover {
+    color: var(--azul);
+}
+
+/* ===== STATUS ===== */
+.status {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+}
+
+.status-otimo     { background-color: var(--verde);       color: var(--branco); }
+.status-bom       { background-color: var(--azul);        color: var(--branco); }
+.status-regular   { background-color: var(--amarelo);     color: var(--cinza-escuro); }
+.status-ruim      { background-color: var(--vermelho);    color: var(--branco); }
+.status-inservivel{ background-color: var(--cinza-escuro);color: var(--branco); }
+.status-agendado  { background-color: var(--azul);        color: var(--branco); }
+.status-concluido { background-color: var(--verde);       color: var(--branco); }
+
+/* ===== FORMULÁRIOS ===== */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--borda);
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--azul);
+}
+
+/* ===== FILTROS ===== */
+.filter-section {
+    background-color: var(--branco);
+    padding: 15px;
+    border-radius: 4px;
+    border: 1px solid var(--borda);
+    margin-bottom: 20px;
+}
+
+.filter-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+}
+
+.filter-row input,
+.filter-row select {
+    padding: 8px 10px;
+    border: 1px solid var(--borda);
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+/* ===== PAGINAÇÃO ===== */
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+.page-btn {
+    padding: 6px 10px;
+    border: 1px solid var(--borda);
+    background-color: var(--branco);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.page-btn.active {
+    background-color: var(--azul);
+    color: var(--branco);
+    border-color: var(--azul);
+}
+
+/* ===== BARRAS DE PROGRESSO ===== */
+.progress-item {
+    margin-bottom: 12px;
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.progress-bar-bg {
+    height: 6px;
+    background-color: var(--cinza-claro);
+    border-radius: 3px;
+}
+
+.progress-bar-fill {
+    height: 6px;
+    background-color: var(--azul);
+    border-radius: 3px;
+}
+
+/* ===== UPLOAD ===== */
+.upload-area {
+    border: 1px dashed var(--borda);
+    border-radius: 4px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    background-color: var(--cinza-claro);
+    margin-bottom: 15px;
+}
+
+.upload-area i {
+    font-size: 24px;
+    color: var(--azul);
+    display: block;
+    margin-bottom: 8px;
+}
+
+.upload-area p {
+    font-size: 13px;
+    color: var(--cinza);
+}
+
+/* ===== RESPONSIVO ===== */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 60px;
+        padding: 15px 8px;
+    }
+
+    .logo-text,
+    .user-details,
+    .menu-item span {
+        display: none;
+    }
+
+    .main-content {
+        margin-left: 60px;
+    }
+
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+}

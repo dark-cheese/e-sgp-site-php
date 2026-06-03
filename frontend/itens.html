@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>e-SGP - Itens</title>
+    
+    <!-- Ícones -->
+    <link rel="stylesheet" href="../fonts/css/all.min.css">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="../css/itens.css">
+</head>
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <i class="fas fa-building"></i>
+                </div>
+                <div class="logo-text">
+                    <h2>e-SGP</h2>
+                </div>
+            </div>
+
+            <nav class="menu">
+                <a href="dashboard.html" class="menu-item"><i class="fas fa-home"></i> Dashboard</a>
+                <a href="secretarias.html" class="menu-item"><i class="fas fa-landmark"></i> Secretarias</a>
+                <a href="unidades.html" class="menu-item"><i class="fas fa-school"></i> Unidades</a>
+                <a href="locais.html" class="menu-item"><i class="fas fa-door-open"></i> Departamentos</a>
+                <a href="itens.html" class="menu-item active"><i class="fas fa-boxes"></i> Patrimônio</a>
+                <a href="responsaveis.html" class="menu-item"><i class="fas fa-user-check"></i> Responsáveis</a>
+                <a href="inventarios.html" class="menu-item"><i class="fas fa-clipboard-list"></i> Inventários</a>
+                <a href="baixas.html" class="menu-item"><i class="fas fa-file-alt"></i> Baixas</a>
+                <a href="historicos.html" class="menu-item"><i class="fas fa-history"></i> Histórico</a>
+            </nav>
+
+            <div class="user-info">
+                <div class="user-avatar">AD</div>
+                <div>
+                    <h4>Admin</h4>
+                    <p style="font-size: 11px;">admin@prefeitura.br</p>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="header">
+                <div class="page-title">
+                    <h1>Itens Patrimoniais</h1>
+                    <div class="breadcrumb">
+                        <a href="secretarias.html">Educação</a>
+                        <i class="fas fa-chevron-right"></i>
+                        <a href="unidades.html">E.M. Pedro</a>
+                        <i class="fas fa-chevron-right"></i>
+                        <a href="locais.html">Sala 1</a>
+                        <i class="fas fa-chevron-right"></i>
+                        <span>Itens</span>
+                    </div>
+                </div>
+                <div class="action-group">
+                    <button class="btn btn-primary" onclick="window.location.href='novo-item.html'">
+                        <i class="fas fa-plus"></i> Novo
+                    </button>
+                </div>
+            </header>
+
+            <div class="filter-section">
+                <div class="filter-row">
+                    <input type="text" placeholder="Buscar por nº patrimônio ou descrição...">
+                    <select>
+                        <option>Todos os estados</option>
+                        <option>Ótimo</option>
+                        <option>Bom</option>
+                        <option>Regular</option>
+                        <option>Ruim</option>
+                    </select>
+                    <button class="btn btn-primary">Filtrar</button>
+                </div>
+            </div>
+
+            <div class="items-summary">
+                <span><strong>Total de itens:</strong> 345</span>
+                <span><strong>Valor total:</strong> R$ 450.000,00</span>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nº Patrimônio</th>
+                        <th>Descrição</th>
+                        <th>Local</th>
+                        <th>Estado</th>
+                        <th>Responsável</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="itensTableBody">
+                    <tr>
+                        <td colspan="6">Carregando itens...</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="pagination">
+                <button class="page-btn"><i class="fas fa-chevron-left"></i></button>
+                <button class="page-btn active">1</button>
+                <button class="page-btn">2</button>
+                <button class="page-btn">3</button>
+                <button class="page-btn">4</button>
+                <button class="page-btn">5</button>
+                <button class="page-btn"><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </main>
+    </div>
+
+    <script src="../js/main.js"></script>
+    <script src="../js/utils.js"></script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>e-SGP - Responsáveis</title>
+    <link rel="stylesheet" href="../fonts/css/all.min.css">
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <div class="logo-area">
+                <div class="logo-icon"><i class="fas fa-building"></i></div>
+                <div class="logo-text">
+                    <h2>e-SGP</h2>
+                </div>
+            </div>
+            <nav class="menu">
+                <a href="dashboard.html" class="menu-item"><i class="fas fa-home"></i><span>Dashboard</span></a>
+                <a href="secretarias.html" class="menu-item"><i class="fas fa-landmark"></i><span>Secretarias</span></a>
+                <a href="unidades.html" class="menu-item"><i class="fas fa-school"></i><span>Unidades</span></a>
+                <a href="locais.html" class="menu-item"><i class="fas fa-door-open"></i><span>Departamentos</span></a>
+                <a href="itens.html" class="menu-item"><i class="fas fa-boxes"></i><span>Patrimônio</span></a>
+                <a href="responsaveis.html" class="menu-item active"><i class="fas fa-user-check"></i><span>Responsáveis</span></a>
+                <a href="inventarios.html" class="menu-item"><i class="fas fa-clipboard-list"></i><span>Inventários</span></a>
+                <a href="baixas.html" class="menu-item"><i class="fas fa-file-alt"></i><span>Baixas</span></a>
+                <a href="historicos.html" class="menu-item"><i class="fas fa-history"></i><span>Histórico</span></a>
+            </nav>
+            <div class="user-info">
+                <div class="user-avatar">AD</div>
+                <div class="user-details">
+                    <h4>Admin</h4>
+                    <p>admin@prefeitura.br</p>
+                </div>
+            </div>
+        </aside>
+        <main class="main-content">
+            <header class="header">
+                <div class="page-title">
+                    <h1>Responsáveis</h1>
+                    <div class="breadcrumb"><span>Responsáveis</span></div>
+                </div>
+                <div class="date-display"></div>
+            </header>
+            <div class="card">
+                <div class="card-header">
+                    <h2>Lista de Responsáveis</h2>
+                    <button class="btn btn-primary" onclick="window.location.href='novo-responsavel.html'">Novo Responsável</button>
+                </div>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Cargo</th>
+                            <th>Usuário Vinculado</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="responsavelTableBody">
+                        <tr>
+                            <td colspan="4">Carregando responsáveis...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+    <script>
+        async function carregarResponsaveisLista() {
+            try {
+                const response = await fetch(getApiBaseUrl() + '/responsaveis.php');
+                const data = await response.json();
+                const tbody = document.getElementById('responsavelTableBody');
+                tbody.innerHTML = '';
+                if (!data.success) {
+                    tbody.innerHTML = '<tr><td colspan="4">' + (data.message || 'Erro ao carregar responsáveis.') + '</td></tr>';
+                    return;
+                }
+                if (!data.data || data.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4">Nenhum responsável cadastrado.</td></tr>';
+                    return;
+                }
+                data.data.forEach(function (responsavel) {
+                    const email = responsavel.email ? responsavel.email : '';
+                    const row = document.createElement('tr');
+                    row.innerHTML = '<td>' + (responsavel.nome || '') + '</td>' +
+                        '<td>' + (responsavel.cargo || '') + '</td>' +
+                        '<td>' + email + '</td>' +
+                        '<td><button class="action-btn">Ver</button></td>';
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                const tbody = document.getElementById('responsavelTableBody');
+                tbody.innerHTML = '<tr><td colspan="4">Erro ao carregar responsáveis.</td></tr>';
+                console.error(error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', carregarResponsaveisLista);
+    </script>
+    <script src="../js/main.js"></script>
+</body>
+</html>
