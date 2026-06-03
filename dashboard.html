@@ -98,7 +98,7 @@
                 <div class="stat-card">
                     <div class="stat-info">
                         <h3>Total de Bens</h3>
-                        <div class="stat-number">1.234</div>
+                        <div class="stat-number" id="statTotalBens">—</div>
                     </div>
                     <div class="stat-icon">
                         <i class="fas fa-boxes"></i>
@@ -106,29 +106,29 @@
                 </div>
                 <div class="stat-card">
                     <div class="stat-info">
-                        <h3>Valor Total</h3>
-                        <div class="stat-number">R$ 2,5M</div>
+                        <h3>Secretarias</h3>
+                        <div class="stat-number" id="statSecretarias">—</div>
                     </div>
                     <div class="stat-icon">
-                        <i class="fas fa-coins"></i>
+                        <i class="fas fa-landmark"></i>
                     </div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-info">
-                        <h3>Em Manutenção</h3>
-                        <div class="stat-number">56</div>
+                        <h3>Unidades</h3>
+                        <div class="stat-number" id="statUnidades">—</div>
                     </div>
                     <div class="stat-icon">
-                        <i class="fas fa-tools"></i>
+                        <i class="fas fa-school"></i>
                     </div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-info">
-                        <h3>Para Leilão</h3>
-                        <div class="stat-number">23</div>
+                        <h3>Responsáveis</h3>
+                        <div class="stat-number" id="statResponsaveis">—</div>
                     </div>
                     <div class="stat-icon">
-                        <i class="fas fa-gavel"></i>
+                        <i class="fas fa-user-check"></i>
                     </div>
                 </div>
             </div>
@@ -139,34 +139,8 @@
                         <h3>Bens por Secretaria</h3>
                         <a href="secretarias.html">Ver mais</a>
                     </div>
-                    <div class="progress-list">
-                        <div class="progress-item">
-                            <div class="progress-header">
-                                <span><i class="fas fa-graduation-cap"></i> Educação</span>
-                                <span>543 itens</span>
-                            </div>
-                            <div class="progress-bar-bg">
-                                <div class="progress-bar-fill" style="width: 44%"></div>
-                            </div>
-                        </div>
-                        <div class="progress-item">
-                            <div class="progress-header">
-                                <span><i class="fas fa-hospital"></i> Saúde</span>
-                                <span>345 itens</span>
-                            </div>
-                            <div class="progress-bar-bg">
-                                <div class="progress-bar-fill" style="width: 28%"></div>
-                            </div>
-                        </div>
-                        <div class="progress-item">
-                            <div class="progress-header">
-                                <span><i class="fas fa-hard-hat"></i> Obras</span>
-                                <span>198 itens</span>
-                            </div>
-                            <div class="progress-bar-bg">
-                                <div class="progress-bar-fill" style="width: 16%"></div>
-                            </div>
-                        </div>
+                    <div class="progress-list" id="progressSecretarias">
+                        <p style="color: var(--texto-secundario); padding: 8px 0;">Carregando...</p>
                     </div>
                 </div>
 
@@ -174,21 +148,8 @@
                     <div class="card-header">
                         <h3>Atividades Recentes</h3>
                     </div>
-                    <div class="activity-item">
-                        <div class="activity-icon"><i class="fas fa-plus"></i></div>
-                        <div>
-                            <h4>Novo item cadastrado</h4>
-                            <p>Computador - Sala 1</p>
-                        </div>
-                        <small>5 min</small>
-                    </div>
-                    <div class="activity-item">
-                        <div class="activity-icon"><i class="fas fa-exchange-alt"></i></div>
-                        <div>
-                            <h4>Item transferido</h4>
-                            <p>Projetor - Secretaria</p>
-                        </div>
-                        <small>2h</small>
+                    <div id="activityList">
+                        <p style="color: var(--texto-secundario); padding: 8px 0;">Carregando...</p>
                     </div>
                 </div>
             </div>
@@ -203,5 +164,69 @@
 
     <script src="js/main.js"></script>
     <script src="js/utils.js"></script>
+    <script>
+        async function carregarDashboard() {
+            const base = getApiBaseUrl();
+            try {
+                const [itens, secretarias, unidades, responsaveis, historicos] = await Promise.all([
+                    fetch(base + '/itens.php').then(r => r.json()),
+                    fetch(base + '/secretarias.php').then(r => r.json()),
+                    fetch(base + '/unidades.php').then(r => r.json()),
+                    fetch(base + '/responsaveis.php').then(r => r.json()),
+                    fetch(base + '/historicos.php').then(r => r.json())
+                ]);
+
+                document.getElementById('statTotalBens').textContent =
+                    (itens.data || itens).length || 0;
+                document.getElementById('statSecretarias').textContent =
+                    (secretarias.data || secretarias).length || 0;
+                document.getElementById('statUnidades').textContent =
+                    (unidades.data || unidades).length || 0;
+                document.getElementById('statResponsaveis').textContent =
+                    (responsaveis.data || responsaveis).length || 0;
+
+                // Bens por Secretaria
+                const secs = secretarias.data || secretarias;
+                const progressEl = document.getElementById('progressSecretarias');
+                if (secs.length === 0) {
+                    progressEl.innerHTML = '<p style="color:var(--texto-secundario)">Nenhuma secretaria cadastrada.</p>';
+                } else {
+                    const maxItens = Math.max(...secs.map(s => s.total_itens || 0), 1);
+                    progressEl.innerHTML = secs.map(s => {
+                        const pct = Math.round(((s.total_itens || 0) / maxItens) * 100);
+                        return \`<div class="progress-item">
+                            <div class="progress-header">
+                                <span><i class="fas fa-landmark"></i> \${s.nome}</span>
+                                <span>\${s.total_itens || 0} itens</span>
+                            </div>
+                            <div class="progress-bar-bg">
+                                <div class="progress-bar-fill" style="width:\${pct}%"></div>
+                            </div>
+                        </div>\`;
+                    }).join('');
+                }
+
+                // Atividades Recentes
+                const hist = (historicos.data || historicos).slice(0, 5);
+                const actEl = document.getElementById('activityList');
+                if (hist.length === 0) {
+                    actEl.innerHTML = '<p style="color:var(--texto-secundario)">Nenhuma atividade registrada.</p>';
+                } else {
+                    actEl.innerHTML = hist.map(h => \`
+                        <div class="activity-item">
+                            <div class="activity-icon"><i class="fas fa-history"></i></div>
+                            <div>
+                                <h4>\${h.acao || 'Ação'}</h4>
+                                <p>\${h.descricao || ''}</p>
+                            </div>
+                            <small>\${h.data_hora ? h.data_hora.substring(0,10) : ''}</small>
+                        </div>\`).join('');
+                }
+            } catch (e) {
+                console.error('Erro ao carregar dashboard:', e);
+            }
+        }
+        document.addEventListener('DOMContentLoaded', carregarDashboard);
+    </script>
 </body>
 </html>
