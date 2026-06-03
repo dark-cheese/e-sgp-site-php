@@ -3,11 +3,11 @@
 // Configuração da conexão com o banco de dados
 
 class Database {
-    private $host = "100.127.3.46";
-    private $port = 3306;
-    private $db_name = "e_sgp";
-    private $username = "flavio_remoto";
-    private $password = "Flavio@MySQL2026";
+    private $host = "200.131.251.11";
+    private $port = 3341;
+    private $db_name = "2026ProjetoInv";
+    private $username = "2026Iventario";
+    private $password = "Inventa@2026";
     public $conn; //<-- Variável que vai guardar a conexão para ser acessada fora da classe.
 
     public function getConnection() { //<--  Declara um método (função dentro da classe) que vai retornar a conexão com o banco.
