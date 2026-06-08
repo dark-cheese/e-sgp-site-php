@@ -37,7 +37,7 @@ if ($db === null) {
     exit();
 }
 
-$stmt = $db->prepare("SELECT id, nome, email, senha, nivel FROM usuario WHERE email = :email LIMIT 1");
+$stmt = $db->prepare("SELECT id, nome, email, senha FROM usuario WHERE email = :email LIMIT 1");
 $stmt->bindParam(':email', $email);
 $stmt->execute();
 $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -60,8 +60,7 @@ echo json_encode([
     "usuario" => [
         "id"    => (int) $usuario['id'],
         "nome"  => $usuario['nome'],
-        "email" => $usuario['email'],
-        "nivel" => $usuario['nivel'] ?? 'usuario'
+        "email" => $usuario['email']
     ]
 ]);
 ?>
