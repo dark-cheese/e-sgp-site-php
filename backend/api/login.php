@@ -37,7 +37,7 @@ if ($db === null) {
     exit();
 }
 
-$stmt = $db->prepare("SELECT id, nome, email, senha, nivel FROM usuarios WHERE email = :email LIMIT 1");
+$stmt = $db->prepare("SELECT id, nome, email, senha, nivel FROM usuario WHERE email = :email LIMIT 1");
 $stmt->bindParam(':email', $email);
 $stmt->execute();
 $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
