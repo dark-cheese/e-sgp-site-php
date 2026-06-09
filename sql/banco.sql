@@ -42,6 +42,7 @@ CREATE TABLE usuario (
         ON UPDATE RESTRICT
         ON DELETE RESTRICT
 );
+INSERT INTO usuario (nome, email, senha, tipoUsuarioId) VALUES ('Admin','admin@gmail.com','admin123',1);
 
 -- Tabela para responsáveis físicos ou servidores do patrimônio
 CREATE TABLE responsavel (

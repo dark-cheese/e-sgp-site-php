@@ -83,8 +83,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     try {
         $numeroPatrimonio = 'PATR' . date('YmdHis') . rand(100, 999);
-        $query = "INSERT INTO item (numeroPatrimonio, descricao, marca, modelo, numeroSerie, estado, dataAquisicao, valor, notaFiscal, foto, observacoes, departamentoId, localizacaoId, tipoMaterialId, responsavelId)
-            VALUES (:numeroPatrimonio, :descricao, :marca, :modelo, :numeroSerie, :estado, :dataAquisicao, :valor, :notaFiscal, :foto, :observacoes, :departamentoId, :localizacaoId, :tipoMaterialId, :responsavelId)";
+        // Linha 84 - corrigir INSERT removendo campo 'foto' e ajustando ordem
+        $query = "INSERT INTO item (numeroPatrimonio, descricao, marca, modelo, numeroSerie, estado, dataAquisicao, valor, notaFiscal, observacoes, departamentoId, localizacaoId, tipoMaterialId, responsavelId) VALUES (:numeroPatrimonio, :descricao, :marca, :modelo, :numeroSerie, :estado, :dataAquisicao, :valor, :notaFiscal, :observacoes, :departamentoId, :localizacaoId, :tipoMaterialId, :responsavelId)";
+
+        // Remover a linha que define :foto (linha 99)
+        // Remover: $stmt->bindValue(':foto', null, PDO::PARAM_NULL);
         $stmt = $conn->prepare($query);
         $stmt->bindValue(':numeroPatrimonio', $numeroPatrimonio, PDO::PARAM_STR);
         $stmt->bindValue(':descricao', $descricao, PDO::PARAM_STR);
