@@ -7,7 +7,7 @@ const PAGINAS_PROTEGIDAS = [
     'inventarios.html',
     'baixas.html',
     'historicos.html',
-    'locais.html',
+    'departamentos.html',
     'secretarias.html',
     'unidades.html',
     'responsaveis.html',
