@@ -65,10 +65,10 @@
             </nav>
 
             <div class="user-info">
-                <div class="user-avatar">AD</div>
+                <div class="user-avatar user-avatar-dynamic">--</div>
                 <div class="user-details">
-                    <h4>Admin</h4>
-                    <p>admin@prefeitura.br</p>
+                    <h4 class="user-name">Usuário</h4>
+                    <p class="user-email"></p>
                 </div>
             </div>
         </aside>
@@ -155,8 +155,8 @@
             </div>
 
             <div class="action-buttons">
-                <button class="btn btn-primary" onclick="window.location.href='novo-item.html'">
-                    <i class="fas fa-plus"></i> Novo Item
+                <button class="btn btn-primary" onclick="window.location.href='secretarias.html'">
+                    <i class="fas fa-sitemap"></i> Iniciar pela Secretaria
                 </button>
             </div>
         </main>
@@ -192,13 +192,13 @@
                 if (secs.length === 0) {
                     progressEl.innerHTML = '<p style="color:var(--texto-secundario)">Nenhuma secretaria cadastrada.</p>';
                 } else {
-                    const maxItens = Math.max(...secs.map(s => s.total_itens || 0), 1);
+                    const maxItens = Math.max(...secs.map(s => s.itens || 0), 1);
                     progressEl.innerHTML = secs.map(s => {
-                        const pct = Math.round(((s.total_itens || 0) / maxItens) * 100);
+                        const pct = Math.round(((s.itens || 0) / maxItens) * 100);
                         return \`<div class="progress-item">
                             <div class="progress-header">
                                 <span><i class="fas fa-landmark"></i> \${s.nome}</span>
-                                <span>\${s.total_itens || 0} itens</span>
+                                <span>\${s.itens || 0} itens</span>
                             </div>
                             <div class="progress-bar-bg">
                                 <div class="progress-bar-fill" style="width:\${pct}%"></div>
@@ -220,7 +220,7 @@
                                 <h4>\${h.acao || 'Ação'}</h4>
                                 <p>\${h.descricao || ''}</p>
                             </div>
-                            <small>\${h.data_hora ? h.data_hora.substring(0,10) : ''}</small>
+                            <small>\${h.dataRegistro ? h.dataRegistro.substring(0,10) : ''}</small>
                         </div>\`).join('');
                 }
             } catch (e) {

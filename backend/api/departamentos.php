@@ -21,16 +21,28 @@ if (!$conn) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     try {
+        $unidadeId = isset($_GET['unidadeId']) ? (int)$_GET['unidadeId'] : 0;
         $query = "SELECT d.id, d.nome, d.unidadeId, d.responsavelId,
             u.nome AS unidade,
+            u.secretariaId,
+            s.nome AS secretaria,
             r.nome AS responsavel,
             (SELECT COUNT(*) FROM item i WHERE i.departamentoId = d.id) AS itens
         FROM departamento d
         LEFT JOIN unidade u ON d.unidadeId = u.id
-        LEFT JOIN responsavel r ON d.responsavelId = r.id
-        ORDER BY d.nome";
+        LEFT JOIN secretaria s ON u.secretariaId = s.id
+        LEFT JOIN responsavel r ON d.responsavelId = r.id";
+
+        if ($unidadeId > 0) {
+            $query .= " WHERE d.unidadeId = :unidadeId";
+        }
+
+        $query .= " ORDER BY d.nome";
 
         $stmt = $conn->prepare($query);
+        if ($unidadeId > 0) {
+            $stmt->bindValue(':unidadeId', $unidadeId, PDO::PARAM_INT);
+        }
         $stmt->execute();
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

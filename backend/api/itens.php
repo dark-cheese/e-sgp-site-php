@@ -21,20 +21,31 @@ if (!$conn) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     try {
+        $departamentoId = isset($_GET['departamentoId']) ? (int)$_GET['departamentoId'] : 0;
         $query = "SELECT i.id, i.numeroPatrimonio, i.descricao, i.marca, i.modelo, i.numeroSerie, i.estado,
             i.valor, i.notaFiscal, i.dataAquisicao, i.observacoes, i.departamentoId, i.localizacaoId, i.responsavelId, i.tipoMaterialId,
             d.nome AS departamento,
+            d.unidadeId,
             u.nome AS unidade,
+            u.secretariaId,
             r.nome AS responsavel,
             tm.nome AS tipoMaterial
         FROM item i
         LEFT JOIN departamento d ON i.departamentoId = d.id
         LEFT JOIN unidade u ON d.unidadeId = u.id
         LEFT JOIN responsavel r ON i.responsavelId = r.id
-        LEFT JOIN tipo_material tm ON i.tipoMaterialId = tm.id
-        ORDER BY i.numeroPatrimonio";
+        LEFT JOIN tipo_material tm ON i.tipoMaterialId = tm.id";
+
+        if ($departamentoId > 0) {
+            $query .= " WHERE i.departamentoId = :departamentoId";
+        }
+
+        $query .= " ORDER BY i.numeroPatrimonio";
 
         $stmt = $conn->prepare($query);
+        if ($departamentoId > 0) {
+            $stmt->bindValue(':departamentoId', $departamentoId, PDO::PARAM_INT);
+        }
         $stmt->execute();
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -83,11 +94,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     try {
         $numeroPatrimonio = 'PATR' . date('YmdHis') . rand(100, 999);
-        // Linha 84 - corrigir INSERT removendo campo 'foto' e ajustando ordem
         $query = "INSERT INTO item (numeroPatrimonio, descricao, marca, modelo, numeroSerie, estado, dataAquisicao, valor, notaFiscal, observacoes, departamentoId, localizacaoId, tipoMaterialId, responsavelId) VALUES (:numeroPatrimonio, :descricao, :marca, :modelo, :numeroSerie, :estado, :dataAquisicao, :valor, :notaFiscal, :observacoes, :departamentoId, :localizacaoId, :tipoMaterialId, :responsavelId)";
 
-        // Remover a linha que define :foto (linha 99)
-        // Remover: $stmt->bindValue(':foto', null, PDO::PARAM_NULL);
         $stmt = $conn->prepare($query);
         $stmt->bindValue(':numeroPatrimonio', $numeroPatrimonio, PDO::PARAM_STR);
         $stmt->bindValue(':descricao', $descricao, PDO::PARAM_STR);
@@ -102,7 +110,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->bindValue(':valor', null, PDO::PARAM_NULL);
         }
         $stmt->bindValue(':notaFiscal', $notaFiscal ?: null, PDO::PARAM_STR);
-        $stmt->bindValue(':foto', null, PDO::PARAM_NULL);
         $stmt->bindValue(':observacoes', $observacoes ?: null, PDO::PARAM_STR);
         $stmt->bindValue(':departamentoId', $departamentoId, PDO::PARAM_INT);
         if ($localizacaoId !== null) {
