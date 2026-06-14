@@ -256,7 +256,7 @@ CREATE TABLE historico (
     tabelaAlvo VARCHAR(50) NOT NULL,
     registroId INTEGER, -- ID do registro afetado, se criou uma secretaria, aqui vai o ID da secretaria, se criou um item, aqui vai o ID do item, etc.
     descricao VARCHAR(255),
-    dataRegistro DATE NOT NULL,
+    dataRegistro DATETIME NOT NULL,
     CONSTRAINT pk_historico PRIMARY KEY (id),
     CONSTRAINT fk_historico_usuario FOREIGN KEY (usuarioId)
         REFERENCES usuario(id)

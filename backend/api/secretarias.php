@@ -2,7 +2,7 @@
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Headers: Content-Type, X-Usuario-Id");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -10,6 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/auditoria.php';
 
 $database = new Database();
 $conn = $database->getConnection();
@@ -85,11 +86,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->bindValue(':responsavelId', null, PDO::PARAM_NULL);
         }
         $stmt->execute();
+        $id = (int) $conn->lastInsertId();
+        registrarHistorico(
+            $conn,
+            'CRIAR',
+            'secretaria',
+            $id,
+            'Cadastrou a secretaria "' . $nome . '".',
+            obterUsuarioIdDaRequisicao($input)
+        );
 
         echo json_encode([
             'success' => true,
             'message' => 'Secretaria cadastrada com sucesso.',
-            'id' => $conn->lastInsertId()
+            'id' => $id
         ]);
     } catch (PDOException $e) {
         echo json_encode([

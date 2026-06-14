@@ -54,7 +54,7 @@
                             <th>Tabela</th>
                             <th>ID</th>
                             <th>Descrição</th>
-                            <th>Data</th>
+                            <th>Data e Hora</th>
                         </tr>
                     </thead>
                     <tbody id="historicoTableBody">
@@ -79,6 +79,18 @@
             return '/backend/api';
         }
 
+        function escaparHtml(valor) {
+            return String(valor ?? '').replace(/[&<>"']/g, function (caractere) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                }[caractere];
+            });
+        }
+
         async function carregarHistorico() {
             try {
                 const response = await fetch(apiBaseUrl() + '/historicos.php');
@@ -98,12 +110,12 @@
 
                 result.data.forEach(function (registro) {
                     const row = document.createElement('tr');
-                    row.innerHTML = '<td>' + (registro.usuario || 'Desconhecido') + '</td>' +
-                        '<td>' + (registro.acao || '') + '</td>' +
-                        '<td>' + (registro.tabelaAlvo || '') + '</td>' +
-                        '<td>' + (registro.registroId || '') + '</td>' +
-                        '<td>' + (registro.descricao || '') + '</td>' +
-                        '<td>' + (registro.dataRegistro || '') + '</td>';
+                    row.innerHTML = '<td>' + escaparHtml(registro.usuario || 'Desconhecido') + '</td>' +
+                        '<td>' + escaparHtml(registro.acao || '') + '</td>' +
+                        '<td>' + escaparHtml(registro.tabelaAlvo || '') + '</td>' +
+                        '<td>' + escaparHtml(registro.registroId || '') + '</td>' +
+                        '<td>' + escaparHtml(registro.descricao || '') + '</td>' +
+                        '<td>' + escaparHtml(registro.dataRegistro || '') + '</td>';
                     tbody.appendChild(row);
                 });
             } catch (error) {

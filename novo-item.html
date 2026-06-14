@@ -194,7 +194,7 @@
 
                     <!-- Botões -->
                     <div class="form-actions">
-                        <button type="button" class="btn btn-outline" onclick="window.location.href='itens.html'">Cancelar</button>
+                        <button type="button" class="btn btn-outline" onclick="cancelarItem()">Cancelar</button>
                         <button type="submit" class="btn btn-primary">Salvar Item</button>
                     </div>
                 </form>
@@ -204,6 +204,290 @@
 
     <script src="js/main.js"></script>
     <script src="js/utils.js"></script>
-<script src="js/auth.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        var dadosAcesso = {
+            nivel: '',
+            secretarias: [],
+            unidades: [],
+            departamentos: [],
+            responsaveis: []
+        };
+
+        function apiBaseUrl() {
+            if (typeof getApiBaseUrl === 'function') {
+                return getApiBaseUrl();
+            }
+            return '/backend/api';
+        }
+
+        function usuarioLogado() {
+            try {
+                return JSON.parse(sessionStorage.getItem('usuario') || '{}');
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function preencherSelect(select, itens, placeholder, textoItem) {
+            select.innerHTML = '<option value="">' + placeholder + '</option>';
+            itens.forEach(function (item) {
+                var option = document.createElement('option');
+                option.value = item.id;
+                option.textContent = textoItem ? textoItem(item) : item.nome;
+                select.appendChild(option);
+            });
+        }
+
+        function valorPermitido(itens, valor) {
+            return valor && itens.some(function (item) {
+                return String(item.id) === String(valor);
+            });
+        }
+
+        function definirValor(select, valor) {
+            if (valor) {
+                select.value = String(valor);
+            }
+        }
+
+        function travarSeUnico(select, itens, travarPorContexto) {
+            select.disabled = Boolean(travarPorContexto) || itens.length === 1;
+            if (itens.length === 1) {
+                select.value = String(itens[0].id);
+            }
+        }
+
+        function unidadesDaSecretaria(secretariaId) {
+            return dadosAcesso.unidades.filter(function (unidade) {
+                return String(unidade.secretariaId) === String(secretariaId);
+            });
+        }
+
+        function departamentosDaUnidade(unidadeId) {
+            return dadosAcesso.departamentos.filter(function (departamento) {
+                return String(departamento.unidadeId) === String(unidadeId);
+            });
+        }
+
+        function atualizarUnidades(valorPreferido, travarPorContexto) {
+            var secretariaId = document.getElementById('secretariaId').value;
+            var unidadeSelect = document.getElementById('unidadeId');
+            var unidades = secretariaId ? unidadesDaSecretaria(secretariaId) : [];
+
+            preencherSelect(unidadeSelect, unidades, 'Selecione...');
+            definirValor(unidadeSelect, valorPermitido(unidades, valorPreferido) ? valorPreferido : '');
+            travarSeUnico(unidadeSelect, unidades, travarPorContexto);
+            atualizarDepartamentos();
+        }
+
+        function atualizarDepartamentos(valorPreferido, travarPorContexto) {
+            var unidadeId = document.getElementById('unidadeId').value;
+            var departamentoSelect = document.getElementById('departamentoId');
+            var departamentos = unidadeId ? departamentosDaUnidade(unidadeId) : [];
+
+            preencherSelect(departamentoSelect, departamentos, 'Selecione...');
+            definirValor(departamentoSelect, valorPermitido(departamentos, valorPreferido) ? valorPreferido : '');
+            travarSeUnico(departamentoSelect, departamentos, travarPorContexto);
+            carregarLocalizacoes();
+        }
+
+        async function carregarLocalizacoes() {
+            var departamentoId = document.getElementById('departamentoId').value;
+            var select = document.getElementById('localizacaoId');
+            select.innerHTML = '<option value="">Nenhuma localizacao</option>';
+
+            if (!departamentoId) {
+                return;
+            }
+
+            try {
+                var response = await fetch(apiBaseUrl() + '/localizacoes.php?departamentoId=' + encodeURIComponent(departamentoId));
+                var data = await response.json();
+                if (!data.success) {
+                    return;
+                }
+
+                data.data.forEach(function (localizacao) {
+                    var option = document.createElement('option');
+                    option.value = localizacao.id;
+                    option.textContent = localizacao.nome;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        function carregarResponsaveis() {
+            var select = document.getElementById('responsavelId');
+            preencherSelect(select, dadosAcesso.responsaveis, 'Selecione...', function (responsavel) {
+                return responsavel.nome + (responsavel.cargo ? ' - ' + responsavel.cargo : '');
+            });
+            travarSeUnico(select, dadosAcesso.responsaveis, false);
+        }
+
+        function aplicarContextoInicial() {
+            var params = new URLSearchParams(window.location.search);
+            var secretariaSelect = document.getElementById('secretariaId');
+            var secretariaPreferida = params.get('secretariaId');
+            var unidadePreferida = params.get('unidadeId');
+            var departamentoPreferido = params.get('departamentoId');
+            var travarSecretaria = valorPermitido(dadosAcesso.secretarias, secretariaPreferida);
+
+            preencherSelect(secretariaSelect, dadosAcesso.secretarias, 'Selecione...');
+            definirValor(secretariaSelect, travarSecretaria ? secretariaPreferida : '');
+            travarSeUnico(secretariaSelect, dadosAcesso.secretarias, travarSecretaria);
+
+            if (!secretariaSelect.value && dadosAcesso.secretarias.length > 0 && dadosAcesso.nivel !== 'admin') {
+                secretariaSelect.value = String(dadosAcesso.secretarias[0].id);
+            }
+
+            var travarUnidade = valorPermitido(unidadesDaSecretaria(secretariaSelect.value), unidadePreferida);
+            atualizarUnidades(unidadePreferida, travarUnidade);
+            if (!document.getElementById('unidadeId').value) {
+                var unidades = unidadesDaSecretaria(secretariaSelect.value);
+                if (unidades.length > 0 && dadosAcesso.nivel !== 'admin') {
+                    document.getElementById('unidadeId').value = String(unidades[0].id);
+                }
+            }
+
+            var travarDepartamento = valorPermitido(departamentosDaUnidade(document.getElementById('unidadeId').value), departamentoPreferido);
+            atualizarDepartamentos(departamentoPreferido, travarDepartamento);
+            if (!document.getElementById('departamentoId').value) {
+                var departamentos = departamentosDaUnidade(document.getElementById('unidadeId').value);
+                if (departamentos.length > 0 && dadosAcesso.nivel !== 'admin') {
+                    document.getElementById('departamentoId').value = String(departamentos[0].id);
+                    carregarLocalizacoes();
+                }
+            }
+
+            carregarResponsaveis();
+        }
+
+        async function carregarAcessoDoUsuario() {
+            var usuario = usuarioLogado();
+            var submit = document.querySelector('button[type="submit"]');
+
+            try {
+                var url = apiBaseUrl() + '/acesso.php';
+                if (usuario.id) {
+                    url += '?usuarioId=' + encodeURIComponent(usuario.id);
+                }
+
+                var response = await fetch(url);
+                var data = await response.json();
+                if (!data.success) {
+                    throw new Error(data.message || 'Nao foi possivel carregar o acesso do usuario.');
+                }
+
+                dadosAcesso = data.data || dadosAcesso;
+                if (dadosAcesso.nivel === 'sem_acesso') {
+                    if (submit) submit.disabled = true;
+                    alert('Seu usuario nao possui secretaria, unidade ou departamento vinculado para cadastrar patrimonio.');
+                    return;
+                }
+
+                aplicarContextoInicial();
+            } catch (error) {
+                console.error(error);
+                if (submit) submit.disabled = true;
+                alert('Erro ao carregar dados do cadastro de patrimonio:\n' + error.message);
+            }
+        }
+
+        function contextoAtual() {
+            return {
+                secretariaId: document.getElementById('secretariaId').value,
+                unidadeId: document.getElementById('unidadeId').value,
+                departamentoId: document.getElementById('departamentoId').value
+            };
+        }
+
+        function urlItensDoContexto() {
+            var contexto = contextoAtual();
+            if (!contexto.secretariaId || !contexto.unidadeId || !contexto.departamentoId) {
+                return 'secretarias.html';
+            }
+
+            return 'itens.html?secretariaId=' + encodeURIComponent(contexto.secretariaId) +
+                '&unidadeId=' + encodeURIComponent(contexto.unidadeId) +
+                '&departamentoId=' + encodeURIComponent(contexto.departamentoId);
+        }
+
+        function cancelarItem() {
+            window.location.href = urlItensDoContexto();
+        }
+
+        async function salvarItem() {
+            var contexto = contextoAtual();
+            var descricao = document.getElementById('descricao').value.trim();
+            var tipoMaterialId = document.getElementById('tipoMaterialId').value;
+            var estado = document.getElementById('estado').value;
+            var responsavelId = document.getElementById('responsavelId').value;
+            var botao = document.querySelector('button[type="submit"]');
+            var usuario = usuarioLogado();
+
+            if (!descricao || !tipoMaterialId || !estado || !contexto.departamentoId || !responsavelId) {
+                alert('Preencha os campos obrigatorios antes de salvar.');
+                return;
+            }
+
+            var payload = {
+                descricao: descricao,
+                marca: document.getElementById('marca').value.trim(),
+                modelo: document.getElementById('modelo').value.trim(),
+                numeroSerie: document.getElementById('numeroSerie').value.trim(),
+                tipoMaterialId: tipoMaterialId,
+                estado: estado,
+                observacoes: document.getElementById('observacoes').value.trim(),
+                departamentoId: contexto.departamentoId,
+                localizacaoId: document.getElementById('localizacaoId').value,
+                responsavelId: responsavelId,
+                dataAquisicao: document.getElementById('dataAquisicao').value,
+                valor: document.getElementById('valor').value,
+                notaFiscal: document.getElementById('notaFiscal').value.trim(),
+                usuarioId: usuario.id || null
+            };
+
+            try {
+                if (botao) {
+                    botao.disabled = true;
+                    botao.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+                }
+
+                var response = await fetch(apiBaseUrl() + '/itens.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                var data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.message || 'Nao foi possivel cadastrar o item.');
+                }
+
+                alert(data.message + (data.numeroPatrimonio ? '\nPatrimonio: ' + data.numeroPatrimonio : ''));
+                window.location.href = urlItensDoContexto();
+            } catch (error) {
+                console.error(error);
+                alert('Erro ao salvar item:\n' + error.message);
+            } finally {
+                if (botao) {
+                    botao.disabled = false;
+                    botao.innerHTML = 'Salvar Item';
+                }
+            }
+        }
+
+        document.getElementById('secretariaId').addEventListener('change', function () {
+            atualizarUnidades();
+        });
+        document.getElementById('unidadeId').addEventListener('change', function () {
+            atualizarDepartamentos();
+        });
+        document.getElementById('departamentoId').addEventListener('change', carregarLocalizacoes);
+        document.addEventListener('DOMContentLoaded', carregarAcessoDoUsuario);
+    </script>
 </body>
 </html>

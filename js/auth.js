@@ -20,6 +20,34 @@ const PAGINAS_PROTEGIDAS = [
     'novo-inventario.html',
     'nova-baixa.html'
 ];
+function obterUsuarioLogado() {
+    try {
+        return JSON.parse(sessionStorage.getItem('usuario') || '{}');
+    } catch (e) {
+        return {};
+    }
+}
+
+(function anexarUsuarioNasRequisicoesApi() {
+    const fetchOriginal = window.fetch.bind(window);
+
+    window.fetch = function (input, init) {
+        const opcoes = Object.assign({}, init || {});
+        const url = typeof input === 'string' ? input : (input && input.url) || '';
+        const ehApi = url.indexOf('/backend/api') !== -1 || url.indexOf('backend/api') !== -1;
+        const metodo = String(opcoes.method || (input && input.method) || 'GET').toUpperCase();
+        const alteraDados = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(metodo);
+        const usuario = obterUsuarioLogado();
+
+        if (ehApi && alteraDados && usuario.id) {
+            const headers = new Headers(opcoes.headers || (input && input.headers) || {});
+            headers.set('X-Usuario-Id', String(usuario.id));
+            opcoes.headers = headers;
+        }
+
+        return fetchOriginal(input, opcoes);
+    };
+})();
 
 // ─── Guard de rota ────────────────────────────────────────────────────────────
 (function verificarAcesso() {

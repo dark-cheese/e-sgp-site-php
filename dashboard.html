@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>e-SGP - Dashboard</title>
     
-    <!-- Ícones -->
+    <!-- Icones -->
     <link rel="stylesheet" href="fonts/css/all.min.css">
     
     <!-- CSS -->
@@ -36,11 +36,11 @@
                 </a>
                 <a href="responsaveis.html" class="menu-item">
                     <i class="fas fa-user-check"></i>
-                    <span>Responsáveis</span>
+                    <span>Respons&aacute;veis</span>
                 </a>
                 <a href="inventarios.html" class="menu-item">
                     <i class="fas fa-clipboard-list"></i>
-                    <span>Inventários</span>
+                    <span>Invent&aacute;rios</span>
                 </a>
                 <a href="baixas.html" class="menu-item">
                     <i class="fas fa-file-alt"></i>
@@ -48,26 +48,26 @@
                 </a>
                 <a href="historicos.html" class="menu-item">
                     <i class="fas fa-history"></i>
-                    <span>Histórico</span>
+                    <span>Hist&oacute;rico</span>
                 </a>
             </nav>
 
             <div class="user-info">
                 <div class="user-avatar user-avatar-dynamic">--</div>
                 <div class="user-details">
-                    <h4 class="user-name">Usuário</h4>
+                    <h4 class="user-name">Usu&aacute;rio</h4>
                     <p class="user-email"></p>
                 </div>
             </div>
         </aside>
 
-        <!-- Conteúdo Principal -->
+        <!-- Conteudo Principal -->
         <main class="main-content">
             <header class="header">
                 <div class="page-title">
                     <h1>Dashboard</h1>
                     <div class="breadcrumb">
-                        <span>Início</span>
+                        <span>In&iacute;cio</span>
                         <i class="fas fa-chevron-right"></i>
                         <span>Dashboard</span>
                     </div>
@@ -79,14 +79,14 @@
 
             <div class="welcome-card">
                 <h2>Bem-vindo!</h2>
-                <p>Resumo do patrimônio municipal</p>
+                <p>Resumo do patrim&ocirc;nio municipal</p>
             </div>
 
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-info">
                         <h3>Total de Bens</h3>
-                        <div class="stat-number" id="statTotalBens">—</div>
+                        <div class="stat-number" id="statTotalBens">&mdash;</div>
                     </div>
                     <div class="stat-icon">
                         <i class="fas fa-boxes"></i>
@@ -95,7 +95,7 @@
                 <div class="stat-card">
                     <div class="stat-info">
                         <h3>Secretarias</h3>
-                        <div class="stat-number" id="statSecretarias">—</div>
+                        <div class="stat-number" id="statSecretarias">&mdash;</div>
                     </div>
                     <div class="stat-icon">
                         <i class="fas fa-landmark"></i>
@@ -104,7 +104,7 @@
                 <div class="stat-card">
                     <div class="stat-info">
                         <h3>Unidades</h3>
-                        <div class="stat-number" id="statUnidades">—</div>
+                        <div class="stat-number" id="statUnidades">&mdash;</div>
                     </div>
                     <div class="stat-icon">
                         <i class="fas fa-school"></i>
@@ -112,8 +112,8 @@
                 </div>
                 <div class="stat-card">
                     <div class="stat-info">
-                        <h3>Responsáveis</h3>
-                        <div class="stat-number" id="statResponsaveis">—</div>
+                        <h3>Respons&aacute;veis</h3>
+                        <div class="stat-number" id="statResponsaveis">&mdash;</div>
                     </div>
                     <div class="stat-icon">
                         <i class="fas fa-user-check"></i>
@@ -154,67 +154,87 @@
     <script src="js/main.js"></script>
     <script src="js/utils.js"></script>
     <script>
+        function escaparHtml(valor) {
+            return String(valor ?? '').replace(/[&<>"']/g, function (caractere) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                }[caractere];
+            });
+        }
+
+        function atualizarNumero(id, valor) {
+            document.getElementById(id).textContent = Number(valor || 0);
+        }
+
         async function carregarDashboard() {
             const base = getApiBaseUrl();
             try {
-                const [itens, secretarias, unidades, responsaveis, historicos] = await Promise.all([
-                    fetch(base + '/itens.php').then(r => r.json()),
-                    fetch(base + '/secretarias.php').then(r => r.json()),
-                    fetch(base + '/unidades.php').then(r => r.json()),
-                    fetch(base + '/responsaveis.php').then(r => r.json()),
-                    fetch(base + '/historicos.php').then(r => r.json())
-                ]);
+                const response = await fetch(base + '/dashboard.php');
+                const resultado = await response.json();
 
-                document.getElementById('statTotalBens').textContent =
-                    (itens.data || itens).length || 0;
-                document.getElementById('statSecretarias').textContent =
-                    (secretarias.data || secretarias).length || 0;
-                document.getElementById('statUnidades').textContent =
-                    (unidades.data || unidades).length || 0;
-                document.getElementById('statResponsaveis').textContent =
-                    (responsaveis.data || responsaveis).length || 0;
+                if (!response.ok || !resultado.success) {
+                    throw new Error(resultado.message || 'Erro ao carregar dashboard.');
+                }
+
+                const dados = resultado.data || {};
+                const totais = dados.totais || {};
+
+                atualizarNumero('statTotalBens', totais.totalBens);
+                atualizarNumero('statSecretarias', totais.totalSecretarias);
+                atualizarNumero('statUnidades', totais.totalUnidades);
+                atualizarNumero('statResponsaveis', totais.totalResponsaveis);
 
                 // Bens por Secretaria
-                const secs = secretarias.data || secretarias;
+                const secs = dados.secretarias || [];
                 const progressEl = document.getElementById('progressSecretarias');
                 if (secs.length === 0) {
                     progressEl.innerHTML = '<p style="color:var(--texto-secundario)">Nenhuma secretaria cadastrada.</p>';
                 } else {
-                    const maxItens = Math.max(...secs.map(s => s.itens || 0), 1);
+                    const maxItens = Math.max(...secs.map(s => Number(s.itens || 0)), 1);
                     progressEl.innerHTML = secs.map(s => {
-                        const pct = Math.round(((s.itens || 0) / maxItens) * 100);
-                        return \`<div class="progress-item">
+                        const quantidade = Number(s.itens || 0);
+                        const pct = Math.round((quantidade / maxItens) * 100);
+                        return `<div class="progress-item">
                             <div class="progress-header">
-                                <span><i class="fas fa-landmark"></i> \${s.nome}</span>
-                                <span>\${s.itens || 0} itens</span>
+                                <span><i class="fas fa-landmark"></i> ${escaparHtml(s.nome)}</span>
+                                <span>${quantidade} itens</span>
                             </div>
                             <div class="progress-bar-bg">
-                                <div class="progress-bar-fill" style="width:\${pct}%"></div>
+                                <div class="progress-bar-fill" style="width:${pct}%"></div>
                             </div>
-                        </div>\`;
+                        </div>`;
                     }).join('');
                 }
 
                 // Atividades Recentes
-                const hist = (historicos.data || historicos).slice(0, 5);
+                const hist = dados.historicos || [];
                 const actEl = document.getElementById('activityList');
                 if (hist.length === 0) {
                     actEl.innerHTML = '<p style="color:var(--texto-secundario)">Nenhuma atividade registrada.</p>';
                 } else {
-                    actEl.innerHTML = hist.map(h => \`
+                    actEl.innerHTML = hist.map(h => `
                         <div class="activity-item">
                             <div class="activity-icon"><i class="fas fa-history"></i></div>
                             <div>
-                                <h4>\${h.acao || 'Ação'}</h4>
-                                <p>\${h.descricao || ''}</p>
+                                <h4>${escaparHtml(h.acao || 'Acao')}</h4>
+                                <p>${escaparHtml(h.descricao || '')}</p>
                             </div>
-                            <small>\${h.dataRegistro ? h.dataRegistro.substring(0,10) : ''}</small>
-                        </div>\`).join('');
+                            <small>${escaparHtml(h.dataRegistro || '')}</small>
+                        </div>`).join('');
                 }
             } catch (e) {
                 console.error('Erro ao carregar dashboard:', e);
+                document.getElementById('progressSecretarias').innerHTML =
+                    '<p style="color:var(--texto-secundario)">Nao foi possivel carregar os dados do dashboard.</p>';
+                document.getElementById('activityList').innerHTML =
+                    '<p style="color:var(--texto-secundario)">Nao foi possivel carregar as atividades recentes.</p>';
             }
         }
+
         document.addEventListener('DOMContentLoaded', carregarDashboard);
     </script>
 </body>

@@ -2,7 +2,7 @@
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Headers: Content-Type, X-Usuario-Id");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -10,6 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/auditoria.php';
 
 $database = new Database();
 $conn = $database->getConnection();
@@ -75,8 +76,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bindValue(':justificativa', $justificativa, PDO::PARAM_STR);
         $stmt->bindValue(':documento', $documento, PDO::PARAM_STR);
         $stmt->execute();
+        $id = (int) $conn->lastInsertId();
+        registrarHistorico(
+            $conn,
+            'CRIAR',
+            'baixa',
+            $id,
+            'Registrou baixa do item ID ' . $itemId . ' com tipo "' . $tipo . '".',
+            obterUsuarioIdDaRequisicao($input)
+        );
 
-        echo json_encode(['success' => true, 'message' => 'Baixa registrada com sucesso.', 'id' => $conn->lastInsertId()]);
+        echo json_encode(['success' => true, 'message' => 'Baixa registrada com sucesso.', 'id' => $id]);
     } catch (PDOException $e) {
         echo json_encode(['success' => false, 'message' => 'Erro ao registrar baixa: ' . $e->getMessage()]);
     }

@@ -2,7 +2,7 @@
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Headers: Content-Type, X-Usuario-Id");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -10,6 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/auditoria.php';
 
 $database = new Database();
 $conn = $database->getConnection();
@@ -68,8 +69,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bindValue(':status', $status, PDO::PARAM_STR);
         $stmt->bindValue(':unidadeId', $unidadeId, PDO::PARAM_INT);
         $stmt->execute();
+        $id = (int) $conn->lastInsertId();
+        registrarHistorico(
+            $conn,
+            'CRIAR',
+            'inventario',
+            $id,
+            'Cadastrou o inventario "' . $nome . '" do ano ' . $ano . '.',
+            obterUsuarioIdDaRequisicao($input)
+        );
 
-        echo json_encode(['success' => true, 'message' => 'Inventário cadastrado com sucesso.', 'id' => $conn->lastInsertId()]);
+        echo json_encode(['success' => true, 'message' => 'Inventário cadastrado com sucesso.', 'id' => $id]);
     } catch (PDOException $e) {
         echo json_encode(['success' => false, 'message' => 'Erro ao cadastrar inventário: ' . $e->getMessage()]);
     }
