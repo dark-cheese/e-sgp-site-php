@@ -37,10 +37,10 @@
             </nav>
 
             <div class="user-info">
-                <div class="user-avatar">AD</div>
+                <div class="user-avatar user-avatar-dynamic">--</div>
                 <div>
-                    <h4>Admin</h4>
-                    <p style="font-size: 11px;">admin@prefeitura.br</p>
+                    <h4 class="user-name">Usuário</h4>
+                    <p class="user-email" style="font-size: 11px;"></p>
                 </div>
             </div>
         </aside>
@@ -62,13 +62,8 @@
 
             <div class="filter-section">
                 <div class="filter-row">
-                    <select>
-                        <option>Todas as Secretarias</option>
-                        <option>Educação</option>
-                        <option>Saúde</option>
-                    </select>
                     <input type="text" id="buscarUnidade" placeholder="Buscar unidade...">
-                    <button class="btn btn-primary" onclick="filtrarUnidades()">Filtrar</button>
+                    <button class="btn btn-primary">Filtrar</button>
                 </div>
             </div>
 
@@ -93,7 +88,37 @@
         </main>
     </div>
 
+    <script>
+        function contexto() { return new URLSearchParams(window.location.search); }
+        async function carregarUnidades() {
+            const params = contexto();
+            const secretariaId = params.get('secretariaId');
+            const tbody = document.getElementById('unidadeTableBody');
+            const response = await fetch(getApiBaseUrl() + '/unidades.php?secretariaId=' + encodeURIComponent(secretariaId));
+            const data = await response.json();
+            tbody.innerHTML = '';
+            if (!data.success || !data.data.length) {
+                tbody.innerHTML = '<tr><td colspan="6">Nenhuma unidade encontrada para a secretaria selecionada.</td></tr>';
+                return;
+            }
+            data.data.forEach(function (unidade) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = '<td><i class="fas fa-school"></i> ' + (unidade.nome || '') + '</td>' +
+                    '<td>' + (unidade.secretaria || '') + '</td>' +
+                    '<td>' + (unidade.departamentos || 0) + '</td>' +
+                    '<td>' + (unidade.itens || 0) + '</td>' +
+                    '<td>' + (unidade.responsavel || 'Sem responsável') + '</td>' +
+                    '<td><button class="action-btn" type="button"><i class="fas fa-eye"></i></button></td>';
+                tr.querySelector('button').addEventListener('click', function () {
+                    window.location.href = 'departamentos.html?secretariaId=' + encodeURIComponent(secretariaId) + '&unidadeId=' + encodeURIComponent(unidade.id);
+                });
+                tbody.appendChild(tr);
+            });
+        }
+        document.addEventListener('DOMContentLoaded', carregarUnidades);
+    </script>
     <script src="js/main.js"></script>
     <script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
 </body>
 </html>

@@ -12,7 +12,13 @@ const PAGINAS_PROTEGIDAS = [
     'unidades.html',
     'responsaveis.html',
     'relatorios.html',
-    'novo-item.html'
+    'novo-item.html',
+    'nova-secretaria.html',
+    'nova-unidade.html',
+    'novo-departamento.html',
+    'novo-responsavel.html',
+    'novo-inventario.html',
+    'nova-baixa.html'
 ];
 
 // ─── Guard de rota ────────────────────────────────────────────────────────────
@@ -21,22 +27,65 @@ const PAGINAS_PROTEGIDAS = [
     const usuario = sessionStorage.getItem('usuario');
 
     if (PAGINAS_PROTEGIDAS.includes(paginaAtual) && !usuario) {
-        // Redireciona para o login e guarda a página de destino
         sessionStorage.setItem('redirecionarPara', window.location.href);
         window.location.replace('index.html');
+        return;
+    }
+
+    const parametros = new URLSearchParams(window.location.search);
+    const fluxoObrigatorio = {
+        'unidades.html': ['secretariaId'],
+        'departamentos.html': ['secretariaId', 'unidadeId'],
+        'itens.html': ['secretariaId', 'unidadeId', 'departamentoId'],
+        'novo-departamento.html': ['secretariaId', 'unidadeId'],
+        'novo-item.html': ['secretariaId', 'unidadeId', 'departamentoId']
+    };
+
+    if (fluxoObrigatorio[paginaAtual]) {
+        const contextoValido = fluxoObrigatorio[paginaAtual].every((campo) => parametros.get(campo));
+        if (!contextoValido) {
+            window.location.replace('secretarias.html');
+        }
     }
 })();
 
+
+function atualizarLinksHierarquia() {
+    const params = new URLSearchParams(window.location.search);
+    const secretariaId = params.get('secretariaId');
+    const unidadeId = params.get('unidadeId');
+    const departamentoId = params.get('departamentoId');
+
+    document.querySelectorAll('a[href="unidades.html"]').forEach((link) => {
+        link.href = secretariaId ? 'unidades.html?secretariaId=' + encodeURIComponent(secretariaId) : 'secretarias.html';
+    });
+    document.querySelectorAll('a[href="departamentos.html"]').forEach((link) => {
+        link.href = secretariaId && unidadeId
+            ? 'departamentos.html?secretariaId=' + encodeURIComponent(secretariaId) + '&unidadeId=' + encodeURIComponent(unidadeId)
+            : 'secretarias.html';
+    });
+    document.querySelectorAll('a[href="itens.html"]').forEach((link) => {
+        link.href = secretariaId && unidadeId && departamentoId
+            ? 'itens.html?secretariaId=' + encodeURIComponent(secretariaId) + '&unidadeId=' + encodeURIComponent(unidadeId) + '&departamentoId=' + encodeURIComponent(departamentoId)
+            : 'secretarias.html';
+    });
+}
+
 // ─── Exibe nome do usuário logado no header ───────────────────────────────────
 document.addEventListener('DOMContentLoaded', function () {
+    atualizarLinksHierarquia();
     const usuarioJson = sessionStorage.getItem('usuario');
     if (!usuarioJson) return;
 
     try {
         const usuario = JSON.parse(usuarioJson);
         const nomeEl = document.querySelector('.user-name');
-        if (nomeEl && usuario.nome) {
-            nomeEl.textContent = usuario.nome;
+        const emailEl = document.querySelector('.user-email');
+        const avatarEl = document.querySelector('.user-avatar-dynamic');
+        if (nomeEl && usuario.nome) nomeEl.textContent = usuario.nome;
+        if (emailEl && usuario.email) emailEl.textContent = usuario.email;
+        if (avatarEl && usuario.nome) {
+            avatarEl.textContent = usuario.nome.split(' ').filter(Boolean).slice(0, 2).map((parte) => parte[0]).join('').toUpperCase();
         }
     } catch (e) { /* ignora */ }
 });
@@ -112,7 +161,7 @@ async function login(event) {
 
 // ─── Logout ───────────────────────────────────────────────────────────────────
 function logout() {
-    sessionStorage.removeItem('usuario');
+    sessionStorage.clear();
     window.location.replace('index.html');
 }
 

@@ -37,10 +37,10 @@
             </nav>
 
             <div class="user-info">
-                <div class="user-avatar">AD</div>
+                <div class="user-avatar user-avatar-dynamic">--</div>
                 <div>
-                    <h4>Admin</h4>
-                    <p style="font-size: 11px;">admin@prefeitura.br</p>
+                    <h4 class="user-name">Usuário</h4>
+                    <p class="user-email" style="font-size: 11px;"></p>
                 </div>
             </div>
         </aside>
@@ -50,14 +50,14 @@
                 <div class="page-title">
                     <h1>Departamentos</h1>
                     <div class="breadcrumb">
-                        <a href="secretarias.html">Educação</a>
+                        <a href="secretarias.html">Secretarias</a>
                         <i class="fas fa-chevron-right"></i>
-                        <a href="unidades.html">E.M. Pedro</a>
+                        <a id="voltarUnidades" href="secretarias.html">Unidades</a>
                         <i class="fas fa-chevron-right"></i>
                         <span>Departamentos</span>
                     </div>
                 </div>
-                <button class="btn btn-primary" onclick="window.location.href='novo-departamento.html'">
+                <button class="btn btn-primary" onclick="window.location.href='novo-departamento.html' + window.location.search">
                     <i class="fas fa-plus"></i> Novo Departamento
                 </button>
             </header>
@@ -96,7 +96,12 @@
 
         async function carregarDepartamentos() {
             try {
-                const response = await fetch(apiBaseUrl() + '/departamentos.php');
+                const params = new URLSearchParams(window.location.search);
+                const secretariaId = params.get('secretariaId');
+                const unidadeId = params.get('unidadeId');
+                const voltarUnidades = document.getElementById('voltarUnidades');
+                if (voltarUnidades) voltarUnidades.href = 'unidades.html?secretariaId=' + encodeURIComponent(secretariaId);
+                const response = await fetch(apiBaseUrl() + '/departamentos.php?unidadeId=' + encodeURIComponent(unidadeId));
                 const data = await response.json();
                 const tbody = document.getElementById('departamentoTableBody');
                 tbody.innerHTML = '';
@@ -118,7 +123,7 @@
                         '<td>' + (departamento.responsavel || 'Sem responsável') + '</td>' +
                         '<td>' + (departamento.itens || '0') + '</td>' +
                         '<td>' +
-                            '<button class="action-btn" onclick="window.location.href=\'itens.html\'"><i class="fas fa-eye"></i></button>' +
+                            '<button class="action-btn" onclick="window.location.href=\'itens.html?secretariaId=' + secretariaId + '&unidadeId=' + unidadeId + '&departamentoId=' + departamento.id + '\'"><i class="fas fa-eye"></i></button>' +
                             '<button class="action-btn"><i class="fas fa-edit"></i></button>' +
                             '<button class="action-btn"><i class="fas fa-tag"></i></button>' +
                         '</td>';
@@ -136,5 +141,6 @@
 
     <script src="js/main.js"></script>
     <script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
 </body>
 </html>
