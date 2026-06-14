@@ -176,7 +176,7 @@ CREATE TABLE movimentacao (
         ON UPDATE RESTRICT
         ON DELETE SET NULL,
     CONSTRAINT fk_mov_destino FOREIGN KEY (departamentoDestinoId)
-        REFERENCES departamento(id) -- Antes: REFERENCES locais(id)
+        REFERENCES departamento(id)
         ON UPDATE RESTRICT
         ON DELETE SET NULL
 );

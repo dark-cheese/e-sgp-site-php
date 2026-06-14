@@ -77,10 +77,10 @@
             </nav>
 
             <div class="user-info">
-                <div class="user-avatar">AD</div>
+                <div class="user-avatar user-avatar-dynamic">--</div>
                 <div>
-                    <h4>Admin</h4>
-                    <p style="font-size: 11px;">admin@prefeitura.br</p>
+                    <h4 class="user-name">Usuário</h4>
+                    <p class="user-email" style="font-size: 11px;"></p>
                 </div>
             </div>
         </aside>
@@ -89,11 +89,7 @@
             <header class="header">
                 <div class="page-title">
                     <h1>Novo Departamento</h1>
-                    <div class="breadcrumb">
-                        <a href="departamentos.html">Departamentos</a>
-                        <i class="fas fa-chevron-right"></i>
-                        <span>Novo Departamento</span>
-                    </div>
+                    <div class="breadcrumb"></div>
                 </div>
             </header>
 
@@ -103,10 +99,7 @@
                     <h2>Cadastrar Novo Departamento</h2>
                 </div>
                 
-                <div class="info-unidade">
-                    <i class="fas fa-school"></i>
-                    <strong>Unidade:</strong> Escola Municipal Pedro Álvares
-                </div>
+                <div class="info-unidade" id="infoUnidade" style="display:none;"></div>
                 
                 <form onsubmit="event.preventDefault(); salvarDepartamento()">
                     <div class="form-group">
@@ -134,7 +127,7 @@
                     </div>
                     
                     <div class="form-actions">
-                        <button type="button" class="btn btn-back" onclick="window.location.href='departamentos.html'">
+                        <button type="button" class="btn btn-back" onclick="window.location.href='departamentos.html' + window.location.search">
                             <i class="fas fa-arrow-left"></i> Voltar
                         </button>
                         <button type="submit" class="btn btn-primary">
@@ -162,7 +155,7 @@
         async function carregarOpcoesDepartamento() {
             try {
                 const [unidadesResponse, responsaveisResponse] = await Promise.all([
-                    fetch(apiBaseUrl() + '/unidades.php'),
+                    fetch(apiBaseUrl() + '/unidades.php?secretariaId=' + encodeURIComponent(new URLSearchParams(window.location.search).get('secretariaId') || '')),
                     fetch(apiBaseUrl() + '/responsaveis.php')
                 ]);
 
@@ -172,13 +165,23 @@
                 const unidadeSelect = document.getElementById('unidade');
                 const responsavelSelect = document.getElementById('responsavel');
 
+                const unidadeId = new URLSearchParams(window.location.search).get('unidadeId');
                 if (unidadesData.success) {
-                    unidadesData.data.forEach(function (unidade) {
-                        const option = document.createElement('option');
-                        option.value = unidade.id;
-                        option.textContent = unidade.nome;
-                        unidadeSelect.appendChild(option);
-                    });
+                    unidadesData.data
+                        .filter(function (unidade) { return !unidadeId || String(unidade.id) === String(unidadeId); })
+                        .forEach(function (unidade) {
+                            const option = document.createElement('option');
+                            option.value = unidade.id;
+                            option.textContent = unidade.nome;
+                            option.selected = String(unidade.id) === String(unidadeId);
+                            unidadeSelect.appendChild(option);
+                            const info = document.getElementById('infoUnidade');
+                            if (info && String(unidade.id) === String(unidadeId)) {
+                                info.innerHTML = '<i class="fas fa-school"></i> <strong>Unidade:</strong> ' + unidade.nome;
+                                info.style.display = '';
+                            }
+                        });
+                    if (unidadeId) unidadeSelect.disabled = true;
                 }
 
                 if (responsaveisData.success) {
@@ -196,7 +199,8 @@
 
         async function salvarDepartamento() {
             const nome = document.getElementById('nome').value.trim();
-            const unidadeId = document.getElementById('unidade').value;
+            const unidadeSelect = document.getElementById('unidade');
+            const unidadeId = unidadeSelect.value || new URLSearchParams(window.location.search).get('unidadeId');
             const responsavelId = document.getElementById('responsavel').value;
 
             if (!nome) {
@@ -228,7 +232,7 @@
                 }
 
                 alert(data.message);
-                window.location.href = 'departamentos.html';
+                window.location.href = 'departamentos.html' + window.location.search;
             } catch (error) {
                 console.error(error);
                 alert('Erro ao salvar departamento:\n' + error.message);
@@ -239,5 +243,6 @@
     </script>
     
     <script src="js/main.js"></script>
+<script src="js/auth.js"></script>
 </body>
 </html>

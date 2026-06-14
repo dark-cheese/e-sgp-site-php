@@ -28,7 +28,12 @@ document.addEventListener('DOMContentLoaded', function () {
     // Saudação no welcome card
     var saudacaoEl = document.querySelector('.welcome-card h2');
     if (saudacaoEl) {
-        saudacaoEl.textContent = saudacao() + ', Admin!';
+        var usuarioNome = 'Usuário';
+        try {
+            var usuario = JSON.parse(sessionStorage.getItem('usuario') || '{}');
+            if (usuario.nome) usuarioNome = usuario.nome;
+        } catch (e) { /* ignora */ }
+        saudacaoEl.textContent = saudacao() + ', ' + usuarioNome + '!';
     }
 
     // Marca menu ativo automaticamente

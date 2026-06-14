@@ -37,10 +37,10 @@
             </nav>
 
             <div class="user-info">
-                <div class="user-avatar">AD</div>
+                <div class="user-avatar user-avatar-dynamic">--</div>
                 <div>
-                    <h4>Admin</h4>
-                    <p style="font-size: 11px;">admin@prefeitura.br</p>
+                    <h4 class="user-name">Usuário</h4>
+                    <p class="user-email" style="font-size: 11px;"></p>
                 </div>
             </div>
         </aside>
@@ -49,18 +49,10 @@
             <header class="header">
                 <div class="page-title">
                     <h1>Itens Patrimoniais</h1>
-                    <div class="breadcrumb">
-                        <a href="secretarias.html">Educação</a>
-                        <i class="fas fa-chevron-right"></i>
-                        <a href="unidades.html">E.M. Pedro</a>
-                        <i class="fas fa-chevron-right"></i>
-                        <a href="departamentos.html">Sala 1</a>
-                        <i class="fas fa-chevron-right"></i>
-                        <span>Itens</span>
-                    </div>
+                    <div class="breadcrumb"></div>
                 </div>
                 <div class="action-group">
-                    <button class="btn btn-primary" onclick="window.location.href='novo-item.html'">
+                    <button class="btn btn-primary" onclick="window.location.href='novo-item.html' + window.location.search">
                         <i class="fas fa-plus"></i> Novo
                     </button>
                 </div>
@@ -73,16 +65,16 @@
                         <option>Todos os estados</option>
                         <option>Ótimo</option>
                         <option>Bom</option>
-                        <option>Regular</option>
                         <option>Ruim</option>
+                        <option>Péssimo</option>
                     </select>
                     <button class="btn btn-primary">Filtrar</button>
                 </div>
             </div>
 
             <div class="items-summary">
-                <span><strong>Total de itens:</strong> 345</span>
-                <span><strong>Valor total:</strong> R$ 450.000,00</span>
+                <span><strong>Total de itens:</strong> <span id="totalItens">0</span></span>
+                <span><strong>Valor total:</strong> <span id="valorTotalItens">R$ 0,00</span></span>
             </div>
 
             <table>
@@ -90,7 +82,7 @@
                     <tr>
                         <th>Nº Patrimônio</th>
                         <th>Descrição</th>
-                        <th>Local</th>
+                        <th>Departamento</th>
                         <th>Estado</th>
                         <th>Responsável</th>
                         <th>Ações</th>
@@ -103,18 +95,40 @@
                 </tbody>
             </table>
 
-            <div class="pagination">
-                <button class="page-btn"><i class="fas fa-chevron-left"></i></button>
-                <button class="page-btn active">1</button>
-                <button class="page-btn">2</button>
-                <button class="page-btn">3</button>
-                <button class="page-btn">4</button>
-                <button class="page-btn">5</button>
-                <button class="page-btn"><i class="fas fa-chevron-right"></i></button>
-            </div>
         </main>
     </div>
 
+    <script>
+        async function carregarItens() {
+            const params = new URLSearchParams(window.location.search);
+            const secretariaId = params.get('secretariaId');
+            const unidadeId = params.get('unidadeId');
+            const departamentoId = params.get('departamentoId');
+            const tbody = document.getElementById('itensTableBody');
+            const response = await fetch(getApiBaseUrl() + '/itens.php?departamentoId=' + encodeURIComponent(departamentoId));
+            const data = await response.json();
+            tbody.innerHTML = '';
+            if (!data.success || !data.data.length) {
+                tbody.innerHTML = '<tr><td colspan="6">Nenhum patrimônio encontrado para o departamento selecionado.</td></tr>';
+                return;
+            }
+            let total = 0;
+            data.data.forEach(function (item) {
+                total += Number(item.valor || 0);
+                const tr = document.createElement('tr');
+                tr.innerHTML = '<td>' + (item.numeroPatrimonio || '') + '</td>' +
+                    '<td>' + (item.descricao || '') + '</td>' +
+                    '<td>' + (item.departamento || '') + '</td>' +
+                    '<td>' + (item.estado || '') + '</td>' +
+                    '<td>' + (item.responsavel || 'Sem responsável') + '</td>' +
+                    '<td><button class="action-btn"><i class="fas fa-eye"></i></button></td>';
+                tbody.appendChild(tr);
+            });
+            document.getElementById('totalItens').textContent = data.data.length;
+            document.getElementById('valorTotalItens').textContent = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+        document.addEventListener('DOMContentLoaded', carregarItens);
+    </script>
     <script src="js/auth.js"></script>
     <script src="js/main.js"></script>
     <script src="js/utils.js"></script>

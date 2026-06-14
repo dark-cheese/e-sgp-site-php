@@ -37,10 +37,10 @@
             </nav>
 
             <div class="user-info">
-                <div class="user-avatar">AD</div>
+                <div class="user-avatar user-avatar-dynamic">--</div>
                 <div>
-                    <h4>Admin</h4>
-                    <p style="font-size: 11px;">admin@prefeitura.br</p>
+                    <h4 class="user-name">Usuário</h4>
+                    <p class="user-email" style="font-size: 11px;"></p>
                 </div>
             </div>
         </aside>
@@ -49,11 +49,7 @@
             <header class="header">
                 <div class="page-title">
                     <h1>Novo Item</h1>
-                    <div class="breadcrumb">
-                        <a href="itens.html">Patrimônio</a>
-                        <i class="fas fa-chevron-right"></i>
-                        <span>Novo Item</span>
-                    </div>
+                    <div class="breadcrumb"></div>
                 </div>
             </header>
 
@@ -196,7 +192,7 @@
 
                     <!-- Botões -->
                     <div class="form-actions">
-                        <button type="button" class="btn btn-outline" onclick="window.location.href='itens.html'">Cancelar</button>
+                        <button type="button" class="btn btn-outline" onclick="window.location.href='itens.html' + window.location.search">Cancelar</button>
                         <button type="submit" class="btn btn-primary">Salvar Item</button>
                     </div>
                 </form>
@@ -206,5 +202,6 @@
 
     <script src="js/main.js"></script>
     <script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
 </body>
 </html>

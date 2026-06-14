@@ -430,3 +430,9 @@ td {
         gap: 10px;
     }
 }
+
+.menu-item-disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+}
