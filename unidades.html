@@ -86,7 +86,19 @@
     </div>
 
     <script>
-        function contexto() { return new URLSearchParams(window.location.search); }
+        // ===== DEFINIÇÃO LOCAL DA API BASE =====
+        function apiBaseUrl() {
+            if (typeof getApiBaseUrl === 'function') {
+                return getApiBaseUrl();
+            }
+            var path = window.location.pathname;
+            var index = path.indexOf('/frontend/');
+            if (index !== -1) {
+                return path.substring(0, index) + '/backend/api';
+            }
+            return '/backend/api';
+        }
+
         async function carregarUnidades() {
             const params = new URLSearchParams(window.location.search);
             const secretariaId = params.get('secretariaId');
@@ -110,7 +122,6 @@
                         '<td>' + (unidade.departamentos || 0) + '</td>' +
                         '<td>' + (unidade.itens || 0) + '</td>' +
                         '<td>' + (unidade.responsavel || 'Sem responsável') + '</td>' +
-                        // ===== CORREÇÃO: Passa secretariaId E unidadeId =====
                         '<td><button class="action-btn" onclick="window.location.href=\'departamentos.html?secretariaId=' + encodeURIComponent(secretariaId) + '&unidadeId=' + encodeURIComponent(unidade.id) + '\'"><i class="fas fa-eye"></i></button></td>';
                     tbody.appendChild(tr);
                 });
@@ -119,6 +130,7 @@
                 tbody.innerHTML = '<tr><td colspan="6">Erro ao carregar unidades.</td></tr>';
             }
         }
+
         document.addEventListener('DOMContentLoaded', carregarUnidades);
     </script>
     <script src="js/main.js"></script>

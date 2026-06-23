@@ -131,8 +131,6 @@
     <script>
         /**
          * Obtém a URL base da API
-         * Verifica se a função global getApiBaseUrl existe, senão constrói a URL
-         * @returns {string} URL base da API
          */
         function apiBaseUrl() {
             if (typeof getApiBaseUrl === 'function') {
@@ -148,8 +146,6 @@
 
         /**
          * Função para voltar à página anterior mantendo os parâmetros da URL
-         * Se existir secretariaId, volta para unidades.html com o parâmetro
-         * Senão, volta para secretarias.html
          */
         function voltarPaginaAnterior() {
             const params = new URLSearchParams(window.location.search);
@@ -162,10 +158,18 @@
             }
         }
 
-            async function carregarOpcoesUnidade() {
+        /**
+         * Carrega as opções para os selects (Secretarias e Responsáveis)
+         * Auto preenche a Secretaria se veio um secretariaId na URL
+         * Atualiza o breadcrumb dinamicamente
+         */
+        async function carregarOpcoesUnidade() {
             try {
                 const params = new URLSearchParams(window.location.search);
                 const secretariaIdParam = params.get('secretariaId');
+
+                console.log('🔍 Carregando opções para nova unidade');
+                console.log('📌 secretariaIdParam:', secretariaIdParam);
 
                 const [secretariasResponse, responsaveisResponse] = await Promise.all([
                     fetch(apiBaseUrl() + '/secretarias.php'),
@@ -175,12 +179,15 @@
                 const secretariasData = await secretariasResponse.json();
                 const responsaveisData = await responsaveisResponse.json();
 
+                console.log('📌 secretariasData:', secretariasData);
+
                 const secretariaSelect = document.getElementById('secretaria');
                 const responsavelSelect = document.getElementById('responsavel');
 
-                // Preenche secretarias
-                if (secretariasData.success) {
+                // ===== CARREGA SECRETARIAS =====
+                if (secretariasData.success && secretariasData.data.length > 0) {
                     secretariaSelect.innerHTML = '<option value="">Selecione uma secretaria...</option>';
+                    
                     secretariasData.data.forEach(function (sec) {
                         const opt = document.createElement('option');
                         opt.value = sec.id;
@@ -188,21 +195,23 @@
                         secretariaSelect.appendChild(opt);
                     });
 
-                    // Auto preencher se tiver parâmetro
+                    // ===== AUTO PREENCHER: Se veio um secretariaId na URL =====
                     if (secretariaIdParam) {
                         const existe = secretariasData.data.some(s => String(s.id) === String(secretariaIdParam));
                         if (existe) {
                             secretariaSelect.value = secretariaIdParam;
-                            // Opcional: desabilitar
-                            // secretariaSelect.disabled = true;
+                            console.log('✅ Secretaria selecionada:', secretariaSelect.value);
                         } else {
-                            console.warn('Secretaria ID não encontrado:', secretariaIdParam);
+                            console.warn('⚠️ Secretaria ID não encontrado:', secretariaIdParam);
                         }
                     }
+                } else {
+                    console.warn('⚠️ Nenhuma secretaria encontrada');
+                    secretariaSelect.innerHTML = '<option value="">Nenhuma secretaria disponível</option>';
                 }
 
-                // Preenche responsáveis
-                if (responsaveisData.success) {
+                // ===== CARREGA RESPONSÁVEIS =====
+                if (responsaveisData.success && responsaveisData.data.length > 0) {
                     responsaveisData.data.forEach(function (resp) {
                         const opt = document.createElement('option');
                         opt.value = resp.id;
@@ -211,34 +220,32 @@
                     });
                 }
 
-                // Atualiza breadcrumb
+                // ===== ATUALIZA BREADCRUMB =====
                 const breadcrumb = document.getElementById('breadcrumbVoltar');
                 if (secretariaIdParam && secretariasData.success) {
                     const sec = secretariasData.data.find(s => String(s.id) === String(secretariaIdParam));
                     if (sec) {
                         breadcrumb.textContent = sec.nome;
                         breadcrumb.href = 'unidades.html?secretariaId=' + encodeURIComponent(secretariaIdParam);
+                    } else {
+                        breadcrumb.textContent = 'Secretarias';
+                        breadcrumb.href = 'secretarias.html';
                     }
+                } else {
+                    breadcrumb.textContent = 'Secretarias';
+                    breadcrumb.href = 'secretarias.html';
                 }
 
             } catch (error) {
                 console.error('❌ Erro em carregarOpcoesUnidade:', error);
                 alert('Erro ao carregar dados. Tente novamente.');
             }
-    }
-        /**
-         * Carrega as opções para os selects (Secretarias e Responsáveis)
-         * Auto preenche a Secretaria se veio um secretariaId na URL
-         * Atualiza o breadcrumb dinamicamente
-         */
-        
+        }
 
         /**
          * Salva uma nova unidade no banco de dados
-         * Valida os campos obrigatórios e redireciona para a página anterior
          */
         async function salvarUnidade() {
-            // ===== VALIDA CAMPOS =====
             const nome = document.getElementById('nome').value.trim();
             const secretaria = document.getElementById('secretaria').value;
             const endereco = document.getElementById('endereco').value.trim();
@@ -255,7 +262,6 @@
             }
 
             try {
-                // ===== ENVIA DADOS PARA API =====
                 const response = await fetch(apiBaseUrl() + '/unidades.php', {
                     method: 'POST',
                     headers: {
@@ -274,20 +280,18 @@
                     throw new Error(data.message || 'Não foi possível cadastrar a unidade.');
                 }
 
-                // ===== SUCESSO: REDIRECIONA =====
                 alert(data.message);
                 const params = new URLSearchParams(window.location.search);
                 const secretariaId = params.get('secretariaId');
                 
-                // Volta para a lista de unidades da secretaria
                 if (secretariaId) {
                     window.location.href = 'unidades.html?secretariaId=' + encodeURIComponent(secretariaId);
                 } else {
                     window.location.href = 'secretarias.html';
                 }
             } catch (error) {
-                console.error('Erro ao salvar unidade:', error);
-                alert('Erro ao salvar unidade:\n' + error.message); 
+                console.error('❌ Erro ao salvar unidade:', error);
+                alert('Erro ao salvar unidade:\n' + error.message);
             }
         }
 
