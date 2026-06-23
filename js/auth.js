@@ -20,6 +20,7 @@ const PAGINAS_PROTEGIDAS = [
     'novo-inventario.html',
     'nova-baixa.html'
 ];
+
 function obterUsuarioLogado() {
     try {
         return JSON.parse(sessionStorage.getItem('usuario') || '{}');
@@ -54,6 +55,7 @@ function obterUsuarioLogado() {
     const paginaAtual = window.location.pathname.split('/').pop() || 'index.html';
     const usuario = sessionStorage.getItem('usuario');
 
+    // Verifica se a página exige login
     if (PAGINAS_PROTEGIDAS.includes(paginaAtual) && !usuario) {
         sessionStorage.setItem('redirecionarPara', window.location.href);
         window.location.replace('index.html');
@@ -61,23 +63,36 @@ function obterUsuarioLogado() {
     }
 
     const parametros = new URLSearchParams(window.location.search);
+    
+    /**
+     * ===== FLUXO OBRIGATÓRIO DE PARÂMETROS =====
+     * Define quais parâmetros são obrigatórios para cada página
+     * Se a página não tiver os parâmetros necessários, redireciona para secretarias.html
+     */
     const fluxoObrigatorio = {
         'unidades.html': ['secretariaId'],
         'departamentos.html': ['secretariaId', 'unidadeId'],
         'itens.html': ['secretariaId', 'unidadeId', 'departamentoId'],
+        'nova-unidade.html': ['secretariaId'],          // ← CORRIGIDO: Adicionado
         'novo-departamento.html': ['secretariaId', 'unidadeId'],
         'novo-item.html': ['secretariaId', 'unidadeId', 'departamentoId']
     };
 
+    // Verifica se a página atual está no fluxo obrigatório
     if (fluxoObrigatorio[paginaAtual]) {
         const contextoValido = fluxoObrigatorio[paginaAtual].every((campo) => parametros.get(campo));
         if (!contextoValido) {
+            console.warn(`⚠️ Página ${paginaAtual} requer parâmetros: ${fluxoObrigatorio[paginaAtual].join(', ')}`);
             window.location.replace('secretarias.html');
+            return;
         }
     }
 })();
 
-
+/**
+ * Atualiza os links de navegação hierárquica
+ * Mantém os parâmetros de contexto (secretariaId, unidadeId, departamentoId)
+ */
 function atualizarLinksHierarquia() {
     const params = new URLSearchParams(window.location.search);
     const secretariaId = params.get('secretariaId');
@@ -195,7 +210,6 @@ function logout() {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function mostrarErro(msg) {
-    // Tenta usar elemento de erro já existente; se não houver, usa alert
     let errEl = document.getElementById('login-erro');
     if (errEl) {
         errEl.textContent = msg;
