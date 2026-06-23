@@ -184,70 +184,80 @@
          * AUTO PREENCHE a Unidade se veio um unidadeId na URL
          */
         async function carregarOpcoesDepartamento() {
-            try {
-                // ===== OBTÉM PARÂMETROS DA URL =====
-                const params = new URLSearchParams(window.location.search);
-                const secretariaIdParam = params.get('secretariaId');
-                const unidadeIdParam = params.get('unidadeId');
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const secretariaIdParam = params.get('secretariaId');
+        const unidadeIdParam = params.get('unidadeId');
 
-                console.log('📌 secretariaIdParam:', secretariaIdParam);
-                console.log('📌 unidadeIdParam:', unidadeIdParam);
+        const [unidadesResponse, responsaveisResponse] = await Promise.all([
+            fetch(apiBaseUrl() + '/unidades.php?secretariaId=' + encodeURIComponent(secretariaIdParam)),
+            fetch(apiBaseUrl() + '/responsaveis.php')
+        ]);
 
-                // ===== BUSCA DADOS =====
-                const [unidadesResponse, responsaveisResponse] = await Promise.all([
-                    fetch(apiBaseUrl() + '/unidades.php?secretariaId=' + encodeURIComponent(secretariaIdParam)),
-                    fetch(apiBaseUrl() + '/responsaveis.php')
-                ]);
+        const unidadesData = await unidadesResponse.json();
+        const responsaveisData = await responsaveisResponse.json();
 
-                const unidadesData = await unidadesResponse.json();
-                const responsaveisData = await responsaveisResponse.json();
+        const unidadeSelect = document.getElementById('unidade');
+        const responsavelSelect = document.getElementById('responsavel');
+        const infoUnidade = document.getElementById('infoUnidade');
+        const nomeUnidade = document.getElementById('nomeUnidade');
 
-                console.log('📌 unidadesData:', unidadesData);
+        // Preenche unidades
+        if (unidadesData.success) {
+            unidadeSelect.innerHTML = '<option value="">Selecione uma unidade...</option>';
+            unidadesData.data.forEach(function (uni) {
+                const opt = document.createElement('option');
+                opt.value = uni.id;
+                opt.textContent = uni.nome;
+                unidadeSelect.appendChild(opt);
+            });
 
-                const unidadeSelect = document.getElementById('unidade');
-                const responsavelSelect = document.getElementById('responsavel');
-                const infoUnidade = document.getElementById('infoUnidade');
-                const nomeUnidade = document.getElementById('nomeUnidade');
-
-                // ===== CARREGA UNIDADES =====
-                if (unidadesData.success) {
-                    unidadeSelect.innerHTML = '<option value="">Selecione uma unidade...</option>';
-                    
-                    unidadesData.data.forEach(function (unidade) {
-                        const option = document.createElement('option');
-                        option.value = unidade.id;
-                        option.textContent = unidade.nome;
-                        unidadeSelect.appendChild(option);
-                    });
-
-                    // ===== AUTO PREENCHER: Se veio um unidadeId na URL =====
-                    if (unidadeIdParam) {
-                        // Seleciona a unidade no dropdown
-                        unidadeSelect.value = unidadeIdParam;
-                        console.log('✅ Unidade selecionada:', unidadeSelect.value);
-                        
-                        // Mostra a div informativa com o nome da unidade
-                        const unidadeEncontrada = unidadesData.data.find(u => u.id == unidadeIdParam);
-                        if (unidadeEncontrada) {
-                            nomeUnidade.textContent = unidadeEncontrada.nome;
-                            infoUnidade.style.display = 'block';
-                            console.log('✅ Nome da unidade:', unidadeEncontrada.nome);
-                        }
-                        
-                        // Desabilita o select para não permitir trocar (opcional)
-                        // unidadeSelect.disabled = true;
+            // Auto preencher se tiver unidadeId
+            if (unidadeIdParam) {
+                const existe = unidadesData.data.some(u => String(u.id) === String(unidadeIdParam));
+                if (existe) {
+                    unidadeSelect.value = unidadeIdParam;
+                    // Mostrar info
+                    const unidade = unidadesData.data.find(u => String(u.id) === String(unidadeIdParam));
+                    if (unidade) {
+                        nomeUnidade.textContent = unidade.nome;
+                        infoUnidade.style.display = 'block';
                     }
+                    // unidadeSelect.disabled = true;
+                } else {
+                    console.warn('Unidade ID não encontrado:', unidadeIdParam);
                 }
+            }
+        }
 
-                // ===== CARREGA RESPONSÁVEIS =====
-                if (responsaveisData.success) {
-                    responsaveisData.data.forEach(function (responsavel) {
-                        const option = document.createElement('option');
-                        option.value = responsavel.id;
-                        option.textContent = responsavel.nome + (responsavel.cargo ? ' – ' + responsavel.cargo : '');
-                        responsavelSelect.appendChild(option);
-                    });
-                }
+        // Preenche responsáveis
+        if (responsaveisData.success) {
+            responsaveisData.data.forEach(function (resp) {
+                const opt = document.createElement('option');
+                opt.value = resp.id;
+                opt.textContent = resp.nome + (resp.cargo ? ' – ' + resp.cargo : '');
+                responsavelSelect.appendChild(opt);
+            });
+        }
+
+        // Atualiza breadcrumb
+        const breadcrumb = document.getElementById('breadcrumbVoltar');
+        if (unidadeIdParam && unidadesData.success) {
+            const unidade = unidadesData.data.find(u => String(u.id) === String(unidadeIdParam));
+            if (unidade) {
+                breadcrumb.textContent = unidade.nome;
+                breadcrumb.href = 'departamentos.html?secretariaId=' + encodeURIComponent(secretariaIdParam) + '&unidadeId=' + encodeURIComponent(unidadeIdParam);
+            }
+        } else {
+            breadcrumb.textContent = 'Unidades';
+            breadcrumb.href = 'unidades.html?secretariaId=' + encodeURIComponent(secretariaIdParam);
+        }
+
+    } catch (error) {
+        console.error('❌ Erro em carregarOpcoesDepartamento:', error);
+        alert('Erro ao carregar dados. Tente novamente.');
+    }
+}
 
                 // ===== ATUALIZA BREADCRUMB =====
                 const breadcrumbVoltar = document.getElementById('breadcrumbVoltar');

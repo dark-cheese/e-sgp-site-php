@@ -70,13 +70,13 @@ function obterUsuarioLogado() {
      * Se a página não tiver os parâmetros necessários, redireciona para secretarias.html
      */
     const fluxoObrigatorio = {
-        'unidades.html': ['secretariaId'],
-        'departamentos.html': ['secretariaId', 'unidadeId'],
-        'itens.html': ['secretariaId', 'unidadeId', 'departamentoId'],
-        'nova-unidade.html': ['secretariaId'],          // ← CORRIGIDO: Adicionado
-        'novo-departamento.html': ['secretariaId', 'unidadeId'],
-        'novo-item.html': ['secretariaId', 'unidadeId', 'departamentoId']
-    };
+    'unidades.html': ['secretariaId'],
+    'departamentos.html': ['secretariaId', 'unidadeId'],
+    'itens.html': ['secretariaId', 'unidadeId', 'departamentoId'],
+    'nova-unidade.html': ['secretariaId'],           // ← ADICIONADO
+    'novo-departamento.html': ['secretariaId', 'unidadeId'],
+    'novo-item.html': ['secretariaId', 'unidadeId', 'departamentoId']
+};
 
     // Verifica se a página atual está no fluxo obrigatório
     if (fluxoObrigatorio[paginaAtual]) {

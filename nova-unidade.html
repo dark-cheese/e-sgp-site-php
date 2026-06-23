@@ -162,18 +162,11 @@
             }
         }
 
-        /**
-         * Carrega as opções para os selects (Secretarias e Responsáveis)
-         * Auto preenche a Secretaria se veio um secretariaId na URL
-         * Atualiza o breadcrumb dinamicamente
-         */
-        async function carregarOpcoesUnidade() {
+            async function carregarOpcoesUnidade() {
             try {
-                // Obtém os parâmetros da URL
                 const params = new URLSearchParams(window.location.search);
                 const secretariaIdParam = params.get('secretariaId');
 
-                // Busca dados de secretarias e responsáveis em paralelo
                 const [secretariasResponse, responsaveisResponse] = await Promise.all([
                     fetch(apiBaseUrl() + '/secretarias.php'),
                     fetch(apiBaseUrl() + '/responsaveis.php')
@@ -185,51 +178,60 @@
                 const secretariaSelect = document.getElementById('secretaria');
                 const responsavelSelect = document.getElementById('responsavel');
 
-                // ===== CARREGA SECRETARIAS =====
+                // Preenche secretarias
                 if (secretariasData.success) {
                     secretariaSelect.innerHTML = '<option value="">Selecione uma secretaria...</option>';
-                    
-                    secretariasData.data.forEach(function (secretaria) {
-                        const option = document.createElement('option');
-                        option.value = secretaria.id;
-                        option.textContent = secretaria.nome;
-                        secretariaSelect.appendChild(option);
+                    secretariasData.data.forEach(function (sec) {
+                        const opt = document.createElement('option');
+                        opt.value = sec.id;
+                        opt.textContent = sec.nome;
+                        secretariaSelect.appendChild(opt);
                     });
 
-                    // AUTO PREENCHER: Se veio um secretariaId na URL, seleciona automaticamente
+                    // Auto preencher se tiver parâmetro
                     if (secretariaIdParam) {
-                        secretariaSelect.value = secretariaIdParam;
-                        // Descomente a linha abaixo para desabilitar o campo e impedir troca
-                        // secretariaSelect.disabled = true;
+                        const existe = secretariasData.data.some(s => String(s.id) === String(secretariaIdParam));
+                        if (existe) {
+                            secretariaSelect.value = secretariaIdParam;
+                            // Opcional: desabilitar
+                            // secretariaSelect.disabled = true;
+                        } else {
+                            console.warn('Secretaria ID não encontrado:', secretariaIdParam);
+                        }
                     }
                 }
 
-                // ===== CARREGA RESPONSÁVEIS =====
+                // Preenche responsáveis
                 if (responsaveisData.success) {
-                    responsaveisData.data.forEach(function (responsavel) {
-                        const option = document.createElement('option');
-                        option.value = responsavel.id;
-                        option.textContent = responsavel.nome + (responsavel.cargo ? ' – ' + responsavel.cargo : '');
-                        responsavelSelect.appendChild(option);
+                    responsaveisData.data.forEach(function (resp) {
+                        const opt = document.createElement('option');
+                        opt.value = resp.id;
+                        opt.textContent = resp.nome + (resp.cargo ? ' – ' + resp.cargo : '');
+                        responsavelSelect.appendChild(opt);
                     });
                 }
 
-                // ===== ATUALIZA BREADCRUMB =====
-                const breadcrumbVoltar = document.getElementById('breadcrumbVoltar');
-                if (secretariaIdParam) {
-                    // Busca o nome da secretaria para exibir no breadcrumb
-                    const secretariaNome = secretariasData.data.find(s => s.id == secretariaIdParam)?.nome || 'Secretarias';
-                    breadcrumbVoltar.textContent = secretariaNome;
-                    breadcrumbVoltar.href = 'unidades.html?secretariaId=' + encodeURIComponent(secretariaIdParam);
-                } else {
-                    breadcrumbVoltar.textContent = 'Secretarias';
-                    breadcrumbVoltar.href = 'secretarias.html';
+                // Atualiza breadcrumb
+                const breadcrumb = document.getElementById('breadcrumbVoltar');
+                if (secretariaIdParam && secretariasData.success) {
+                    const sec = secretariasData.data.find(s => String(s.id) === String(secretariaIdParam));
+                    if (sec) {
+                        breadcrumb.textContent = sec.nome;
+                        breadcrumb.href = 'unidades.html?secretariaId=' + encodeURIComponent(secretariaIdParam);
+                    }
                 }
 
             } catch (error) {
-                console.error('Erro ao carregar opções:', error);
+                console.error('❌ Erro em carregarOpcoesUnidade:', error);
+                alert('Erro ao carregar dados. Tente novamente.');
             }
-        }
+    }
+        /**
+         * Carrega as opções para os selects (Secretarias e Responsáveis)
+         * Auto preenche a Secretaria se veio um secretariaId na URL
+         * Atualiza o breadcrumb dinamicamente
+         */
+        
 
         /**
          * Salva uma nova unidade no banco de dados
