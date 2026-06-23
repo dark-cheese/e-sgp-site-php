@@ -75,7 +75,8 @@
                 <div class="page-title">
                     <h1>Nova Unidade</h1>
                     <div class="breadcrumb">
-                        <a href="unidades.html">Unidades</a>
+                        <!-- Breadcrumb dinâmico: será atualizado via JavaScript -->
+                        <a href="#" id="breadcrumbVoltar">Secretarias</a>
                         <i class="fas fa-chevron-right"></i>
                         <span>Nova Unidade</span>
                     </div>
@@ -107,15 +108,15 @@
                     </div>
                     
                     <div class="form-group">
-                        <!-- Modificado: responsavelId agora é selecionado por dropdown em vez de texto livre -->
                         <label>Responsável</label>
-                        <select id="responsavel" required>
+                        <select id="responsavel">
                             <option value="">Selecione um responsável...</option>
                         </select>
                     </div>
                     
                     <div class="form-actions">
-                        <button type="button" class="btn btn-back" onclick="window.location.href='unidades.html'">
+                        <!-- Botão Voltar: chama função que preserva os parâmetros da URL -->
+                        <button type="button" class="btn btn-back" onclick="voltarPaginaAnterior()">
                             <i class="fas fa-arrow-left"></i> Voltar
                         </button>
                         <button type="submit" class="btn btn-primary">
@@ -128,6 +129,11 @@
     </div>
 
     <script>
+        /**
+         * Obtém a URL base da API
+         * Verifica se a função global getApiBaseUrl existe, senão constrói a URL
+         * @returns {string} URL base da API
+         */
         function apiBaseUrl() {
             if (typeof getApiBaseUrl === 'function') {
                 return getApiBaseUrl();
@@ -140,8 +146,34 @@
             return '/backend/api';
         }
 
+        /**
+         * Função para voltar à página anterior mantendo os parâmetros da URL
+         * Se existir secretariaId, volta para unidades.html com o parâmetro
+         * Senão, volta para secretarias.html
+         */
+        function voltarPaginaAnterior() {
+            const params = new URLSearchParams(window.location.search);
+            const secretariaId = params.get('secretariaId');
+            
+            if (secretariaId) {
+                window.location.href = 'unidades.html?secretariaId=' + encodeURIComponent(secretariaId);
+            } else {
+                window.location.href = 'secretarias.html';
+            }
+        }
+
+        /**
+         * Carrega as opções para os selects (Secretarias e Responsáveis)
+         * Auto preenche a Secretaria se veio um secretariaId na URL
+         * Atualiza o breadcrumb dinamicamente
+         */
         async function carregarOpcoesUnidade() {
             try {
+                // Obtém os parâmetros da URL
+                const params = new URLSearchParams(window.location.search);
+                const secretariaIdParam = params.get('secretariaId');
+
+                // Busca dados de secretarias e responsáveis em paralelo
                 const [secretariasResponse, responsaveisResponse] = await Promise.all([
                     fetch(apiBaseUrl() + '/secretarias.php'),
                     fetch(apiBaseUrl() + '/responsaveis.php')
@@ -153,29 +185,58 @@
                 const secretariaSelect = document.getElementById('secretaria');
                 const responsavelSelect = document.getElementById('responsavel');
 
+                // ===== CARREGA SECRETARIAS =====
                 if (secretariasData.success) {
+                    secretariaSelect.innerHTML = '<option value="">Selecione uma secretaria...</option>';
+                    
                     secretariasData.data.forEach(function (secretaria) {
                         const option = document.createElement('option');
                         option.value = secretaria.id;
                         option.textContent = secretaria.nome;
                         secretariaSelect.appendChild(option);
                     });
+
+                    // AUTO PREENCHER: Se veio um secretariaId na URL, seleciona automaticamente
+                    if (secretariaIdParam) {
+                        secretariaSelect.value = secretariaIdParam;
+                        // Descomente a linha abaixo para desabilitar o campo e impedir troca
+                        // secretariaSelect.disabled = true;
+                    }
                 }
 
+                // ===== CARREGA RESPONSÁVEIS =====
                 if (responsaveisData.success) {
                     responsaveisData.data.forEach(function (responsavel) {
                         const option = document.createElement('option');
                         option.value = responsavel.id;
-                        option.textContent = responsavel.nome;
+                        option.textContent = responsavel.nome + (responsavel.cargo ? ' – ' + responsavel.cargo : '');
                         responsavelSelect.appendChild(option);
                     });
                 }
+
+                // ===== ATUALIZA BREADCRUMB =====
+                const breadcrumbVoltar = document.getElementById('breadcrumbVoltar');
+                if (secretariaIdParam) {
+                    // Busca o nome da secretaria para exibir no breadcrumb
+                    const secretariaNome = secretariasData.data.find(s => s.id == secretariaIdParam)?.nome || 'Secretarias';
+                    breadcrumbVoltar.textContent = secretariaNome;
+                    breadcrumbVoltar.href = 'unidades.html?secretariaId=' + encodeURIComponent(secretariaIdParam);
+                } else {
+                    breadcrumbVoltar.textContent = 'Secretarias';
+                    breadcrumbVoltar.href = 'secretarias.html';
+                }
+
             } catch (error) {
-                console.error(error);
+                console.error('Erro ao carregar opções:', error);
             }
         }
 
+        /**
+         * Salva uma nova unidade no banco de dados
+         * Valida os campos obrigatórios e redireciona para a página anterior
+         */
         async function salvarUnidade() {
+            // ===== VALIDA CAMPOS =====
             const nome = document.getElementById('nome').value.trim();
             const secretaria = document.getElementById('secretaria').value;
             const endereco = document.getElementById('endereco').value.trim();
@@ -192,6 +253,7 @@
             }
 
             try {
+                // ===== ENVIA DADOS PARA API =====
                 const response = await fetch(apiBaseUrl() + '/unidades.php', {
                     method: 'POST',
                     headers: {
@@ -210,18 +272,28 @@
                     throw new Error(data.message || 'Não foi possível cadastrar a unidade.');
                 }
 
+                // ===== SUCESSO: REDIRECIONA =====
                 alert(data.message);
-                window.location.href = 'unidades.html';
+                const params = new URLSearchParams(window.location.search);
+                const secretariaId = params.get('secretariaId');
+                
+                // Volta para a lista de unidades da secretaria
+                if (secretariaId) {
+                    window.location.href = 'unidades.html?secretariaId=' + encodeURIComponent(secretariaId);
+                } else {
+                    window.location.href = 'secretarias.html';
+                }
             } catch (error) {
-                console.error(error);
-                alert('Erro ao salvar unidade:\n' + error.message);
+                console.error('Erro ao salvar unidade:', error);
+                alert('Erro ao salvar unidade:\n' + error.message); 
             }
         }
 
+        // Quando a página carregar, executa o carregamento das opções
         document.addEventListener('DOMContentLoaded', carregarOpcoesUnidade);
     </script>
     
     <script src="js/main.js"></script>
-<script src="js/auth.js"></script>
+    <script src="js/auth.js"></script>
 </body>
 </html>

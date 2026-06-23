@@ -50,11 +50,13 @@
                     <div class="breadcrumb">
                         <a href="secretarias.html">Secretarias</a>
                         <i class="fas fa-chevron-right"></i>
+                        <!-- Link dinâmico para unidades com parâmetro secretariaId -->
                         <a id="voltarUnidades" href="secretarias.html">Unidades</a>
                         <i class="fas fa-chevron-right"></i>
                         <span>Departamentos</span>
                     </div>
                 </div>
+                <!-- Botão Novo: mantém os parâmetros da URL ao navegar -->
                 <button class="btn btn-primary" onclick="window.location.href='novo-departamento.html' + window.location.search">
                     <i class="fas fa-plus"></i> Novo Departamento
                 </button>
@@ -70,7 +72,7 @@
                         <th>Ações</th>
                     </tr>
                 </thead>
-                    <tbody id="departamentoTableBody">
+                <tbody id="departamentoTableBody">
                     <tr>
                         <td colspan="5">Carregando departamentos...</td>
                     </tr>
@@ -80,6 +82,11 @@
     </div>
 
     <script>
+        /**
+         * Obtém a URL base da API
+         * Verifica se a função global getApiBaseUrl existe, senão constrói a URL
+         * @returns {string} URL base da API
+         */
         function apiBaseUrl() {
             if (typeof getApiBaseUrl === 'function') {
                 return getApiBaseUrl();
@@ -92,18 +99,37 @@
             return '/backend/api';
         }
 
+        /**
+         * Carrega a lista de departamentos de uma unidade específica
+         * Obtém o unidadeId da URL e faz a requisição para a API
+         * Atualiza o breadcrumb e os links de navegação
+         */
         async function carregarDepartamentos() {
             try {
+                // ===== OBTÉM PARÂMETROS DA URL =====
                 const params = new URLSearchParams(window.location.search);
                 const secretariaId = params.get('secretariaId');
                 const unidadeId = params.get('unidadeId');
+                
+                // ===== ATUALIZA LINK "VOLTAR PARA UNIDADES" =====
                 const voltarUnidades = document.getElementById('voltarUnidades');
-                if (voltarUnidades) voltarUnidades.href = 'unidades.html?secretariaId=' + encodeURIComponent(secretariaId);
+                if (voltarUnidades) {
+                    voltarUnidades.href = 'unidades.html?secretariaId=' + encodeURIComponent(secretariaId);
+                }
+
+                // ===== ATUALIZA BREADCRUMB - VOLTAR PARA UNIDADES =====
+                const breadcrumbUnidades = document.querySelector('.breadcrumb a');
+                if (breadcrumbUnidades && secretariaId) {
+                    breadcrumbUnidades.href = 'unidades.html?secretariaId=' + encodeURIComponent(secretariaId);
+                }
+
+                // ===== BUSCA DEPARTAMENTOS DA UNIDADE =====
                 const response = await fetch(apiBaseUrl() + '/departamentos.php?unidadeId=' + encodeURIComponent(unidadeId));
                 const data = await response.json();
                 const tbody = document.getElementById('departamentoTableBody');
                 tbody.innerHTML = '';
 
+                // ===== VERIFICA RESPOSTA =====
                 if (!data.success) {
                     tbody.innerHTML = '<tr><td colspan="5">' + (data.message || 'Erro ao carregar departamentos.') + '</td></tr>';
                     return;
@@ -114,13 +140,16 @@
                     return;
                 }
 
+                // ===== MONTA LINHAS DA TABELA =====
                 data.data.forEach(function (departamento) {
                     const row = document.createElement('tr');
-                    row.innerHTML = '<td><i class="fas fa-door-open"></i> ' + (departamento.nome || '') + '</td>' +
+                    row.innerHTML = 
+                        '<td><i class="fas fa-door-open"></i> ' + (departamento.nome || '') + '</td>' +
                         '<td>' + (departamento.unidade || '') + '</td>' +
                         '<td>' + (departamento.responsavel || 'Sem responsável') + '</td>' +
                         '<td>' + (departamento.itens || '0') + '</td>' +
                         '<td>' +
+                            // Botão Visualizar: navega para itens.html mantendo todos os parâmetros
                             '<button class="action-btn" onclick="window.location.href=\'itens.html?secretariaId=' + secretariaId + '&unidadeId=' + unidadeId + '&departamentoId=' + departamento.id + '\'"><i class="fas fa-eye"></i></button>' +
                             '<button class="action-btn"><i class="fas fa-edit"></i></button>' +
                             '<button class="action-btn"><i class="fas fa-tag"></i></button>' +
@@ -130,15 +159,16 @@
             } catch (error) {
                 const tbody = document.getElementById('departamentoTableBody');
                 tbody.innerHTML = '<tr><td colspan="5">Erro ao carregar departamentos.</td></tr>';
-                console.error(error);
+                console.error('Erro ao carregar departamentos:', error);
             }
         }
 
+        // Quando a página carregar, executa o carregamento dos departamentos
         document.addEventListener('DOMContentLoaded', carregarDepartamentos);
     </script>
 
     <script src="js/main.js"></script>
     <script src="js/utils.js"></script>
-<script src="js/auth.js"></script>
+    <script src="js/auth.js"></script>
 </body>
 </html>

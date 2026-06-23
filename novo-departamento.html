@@ -88,7 +88,8 @@
                 <div class="page-title">
                     <h1>Novo Departamento</h1>
                     <div class="breadcrumb">
-                        <a href="departamentos.html">Departamentos</a>
+                        <!-- Breadcrumb dinâmico: será atualizado via JavaScript -->
+                        <a href="#" id="breadcrumbVoltar">Unidades</a>
                         <i class="fas fa-chevron-right"></i>
                         <span>Novo Departamento</span>
                     </div>
@@ -101,9 +102,10 @@
                     <h2>Cadastrar Novo Departamento</h2>
                 </div>
                 
-                <div class="info-unidade">
+                <!-- Div informativa: mostra a unidade atual (visível apenas quando vem da navegação) -->
+                <div id="infoUnidade" class="info-unidade" style="display:none;">
                     <i class="fas fa-school"></i>
-                    <strong>Unidade:</strong> Escola Municipal Pedro Álvares
+                    <strong>Unidade:</strong> <span id="nomeUnidade"></span>
                 </div>
                 
                 <form onsubmit="event.preventDefault(); salvarDepartamento()">
@@ -132,7 +134,8 @@
                     </div>
                     
                     <div class="form-actions">
-                        <button type="button" class="btn btn-back" onclick="window.location.href='departamentos.html'">
+                        <!-- Botão Voltar: chama função que preserva os parâmetros da URL -->
+                        <button type="button" class="btn btn-back" onclick="voltarPaginaAnterior()">
                             <i class="fas fa-arrow-left"></i> Voltar
                         </button>
                         <button type="submit" class="btn btn-primary">
@@ -145,6 +148,11 @@
     </div>
 
     <script>
+        /**
+         * Obtém a URL base da API
+         * Verifica se a função global getApiBaseUrl existe, senão constrói a URL
+         * @returns {string} URL base da API
+         */
         function apiBaseUrl() {
             if (typeof getApiBaseUrl === 'function') {
                 return getApiBaseUrl();
@@ -157,10 +165,40 @@
             return '/backend/api';
         }
 
+        /**
+         * Função para voltar à página anterior mantendo os parâmetros da URL
+         * Se existir secretariaId e unidadeId, volta para departamentos.html
+         * Senão, volta para unidades.html com secretariaId
+         */
+        function voltarPaginaAnterior() {
+            const params = new URLSearchParams(window.location.search);
+            const secretariaId = params.get('secretariaId');
+            const unidadeId = params.get('unidadeId');
+            
+            if (secretariaId && unidadeId) {
+                window.location.href = 'departamentos.html?secretariaId=' + encodeURIComponent(secretariaId) + '&unidadeId=' + encodeURIComponent(unidadeId);
+            } else if (unidadeId) {
+                window.location.href = 'departamentos.html?unidadeId=' + encodeURIComponent(unidadeId);
+            } else {
+                window.location.href = 'unidades.html?secretariaId=' + encodeURIComponent(secretariaId);
+            }
+        }
+
+        /**
+         * Carrega as opções para os selects (Unidades e Responsáveis)
+         * Auto preenche a Unidade se veio um unidadeId na URL
+         * Mostra info da unidade e atualiza o breadcrumb dinamicamente
+         */
         async function carregarOpcoesDepartamento() {
             try {
+                // Obtém os parâmetros da URL
+                const params = new URLSearchParams(window.location.search);
+                const secretariaIdParam = params.get('secretariaId');
+                const unidadeIdParam = params.get('unidadeId');
+
+                // Busca dados de unidades (filtradas pela secretaria) e responsáveis em paralelo
                 const [unidadesResponse, responsaveisResponse] = await Promise.all([
-                    fetch(apiBaseUrl() + '/unidades.php'),
+                    fetch(apiBaseUrl() + '/unidades.php?secretariaId=' + encodeURIComponent(secretariaIdParam)),
                     fetch(apiBaseUrl() + '/responsaveis.php')
                 ]);
 
@@ -169,16 +207,36 @@
 
                 const unidadeSelect = document.getElementById('unidade');
                 const responsavelSelect = document.getElementById('responsavel');
+                const infoUnidade = document.getElementById('infoUnidade');
+                const nomeUnidade = document.getElementById('nomeUnidade');
 
+                // ===== CARREGA UNIDADES =====
                 if (unidadesData.success) {
+                    unidadeSelect.innerHTML = '<option value="">Selecione uma unidade...</option>';
+                    
                     unidadesData.data.forEach(function (unidade) {
                         const option = document.createElement('option');
                         option.value = unidade.id;
                         option.textContent = unidade.nome;
                         unidadeSelect.appendChild(option);
                     });
+
+                    // AUTO PREENCHER: Se veio um unidadeId na URL, seleciona automaticamente
+                    if (unidadeIdParam) {
+                        unidadeSelect.value = unidadeIdParam;
+                        
+                        // Mostra a div informativa com o nome da unidade
+                        const unidadeEncontrada = unidadesData.data.find(u => u.id == unidadeIdParam);
+                        if (unidadeEncontrada) {
+                            nomeUnidade.textContent = unidadeEncontrada.nome;
+                            infoUnidade.style.display = 'block';
+                        }
+                        // Descomente a linha abaixo para desabilitar o campo e impedir troca
+                        // unidadeSelect.disabled = true;
+                    }
                 }
 
+                // ===== CARREGA RESPONSÁVEIS =====
                 if (responsaveisData.success) {
                     responsaveisData.data.forEach(function (responsavel) {
                         const option = document.createElement('option');
@@ -187,12 +245,32 @@
                         responsavelSelect.appendChild(option);
                     });
                 }
+
+                // ===== ATUALIZA BREADCRUMB =====
+                const breadcrumbVoltar = document.getElementById('breadcrumbVoltar');
+                if (unidadeIdParam) {
+                    // Busca o nome da unidade para exibir no breadcrumb
+                    const unidadeEncontrada = unidadesData.data.find(u => u.id == unidadeIdParam);
+                    if (unidadeEncontrada) {
+                        breadcrumbVoltar.textContent = unidadeEncontrada.nome;
+                        breadcrumbVoltar.href = 'departamentos.html?secretariaId=' + encodeURIComponent(secretariaIdParam) + '&unidadeId=' + encodeURIComponent(unidadeIdParam);
+                    }
+                } else {
+                    breadcrumbVoltar.textContent = 'Unidades';
+                    breadcrumbVoltar.href = 'unidades.html?secretariaId=' + encodeURIComponent(secretariaIdParam);
+                }
+
             } catch (error) {
-                console.error(error);
+                console.error('Erro ao carregar opções:', error);
             }
         }
 
+        /**
+         * Salva um novo departamento no banco de dados
+         * Valida os campos obrigatórios e redireciona para a página anterior
+         */
         async function salvarDepartamento() {
+            // ===== VALIDA CAMPOS =====
             const nome = document.getElementById('nome').value.trim();
             const unidadeId = document.getElementById('unidade').value;
             const responsavelId = document.getElementById('responsavel').value;
@@ -208,6 +286,7 @@
             }
 
             try {
+                // ===== ENVIA DADOS PARA API =====
                 const response = await fetch(apiBaseUrl() + '/departamentos.php', {
                     method: 'POST',
                     headers: {
@@ -225,18 +304,31 @@
                     throw new Error(data.message || 'Não foi possível cadastrar o departamento.');
                 }
 
+                // ===== SUCESSO: REDIRECIONA =====
                 alert(data.message);
-                window.location.href = 'departamentos.html';
+                const params = new URLSearchParams(window.location.search);
+                const secretariaId = params.get('secretariaId');
+                const unidadeIdParam = params.get('unidadeId');
+                
+                // Volta para a lista de departamentos da unidade
+                if (secretariaId && unidadeIdParam) {
+                    window.location.href = 'departamentos.html?secretariaId=' + encodeURIComponent(secretariaId) + '&unidadeId=' + encodeURIComponent(unidadeIdParam);
+                } else if (unidadeIdParam) {
+                    window.location.href = 'departamentos.html?unidadeId=' + encodeURIComponent(unidadeIdParam);
+                } else {
+                    window.location.href = 'departamentos.html';
+                }
             } catch (error) {
-                console.error(error);
+                console.error('Erro ao salvar departamento:', error);
                 alert('Erro ao salvar departamento:\n' + error.message);
             }
         }
 
+        // Quando a página carregar, executa o carregamento das opções
         document.addEventListener('DOMContentLoaded', carregarOpcoesDepartamento);
     </script>
     
     <script src="js/main.js"></script>
-<script src="js/auth.js"></script>
+    <script src="js/auth.js"></script>
 </body>
 </html>
