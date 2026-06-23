@@ -23,9 +23,17 @@ if (!$conn) {
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     try {
         $query = "SELECT b.id, b.itemId, b.tipo, b.dataBaixa, b.justificativa, b.documento,
-            i.numeroPatrimonio AS itemNumero, i.descricao AS itemDescricao
+            i.numeroPatrimonio AS itemNumero,
+            i.descricao AS itemDescricao,
+            i.valor AS itemValor,
+            d.nome AS departamento,
+            u.nome AS unidade,
+            r.nome AS responsavel
         FROM baixa b
         LEFT JOIN item i ON b.itemId = i.id
+        LEFT JOIN departamento d ON i.departamentoId = d.id
+        LEFT JOIN unidade u ON d.unidadeId = u.id
+        LEFT JOIN responsavel r ON i.responsavelId = r.id
         ORDER BY b.dataBaixa DESC";
 
         $stmt = $conn->prepare($query);
@@ -42,33 +50,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $input = json_decode(file_get_contents('php://input'), true);
     $itemId = isset($input['itemId']) ? (int)$input['itemId'] : 0;
-    $tipo = trim($input['tipo'] ?? '');
+    $tipo = strtoupper(trim($input['tipo'] ?? ''));
     $dataBaixa = trim($input['dataBaixa'] ?? '');
     $justificativa = trim($input['justificativa'] ?? '');
     $documento = trim($input['documento'] ?? '') ?: null;
 
     if ($itemId <= 0) {
-        echo json_encode(['success' => false, 'message' => 'O item é obrigatório.']);
+        echo json_encode(['success' => false, 'message' => 'O item e obrigatorio.']);
         exit;
     }
 
-    if ($tipo === '') {
-        echo json_encode(['success' => false, 'message' => 'O tipo de baixa é obrigatório.']);
+    if (!in_array($tipo, ['DOACAO', 'INUTILIZACAO', 'PERDIDO', 'CADASTRAMENTO_INDEVIDO'])) {
+        echo json_encode(['success' => false, 'message' => 'Tipo de baixa invalido.']);
         exit;
     }
 
     if ($dataBaixa === '') {
-        echo json_encode(['success' => false, 'message' => 'A data da baixa é obrigatória.']);
+        echo json_encode(['success' => false, 'message' => 'A data da baixa e obrigatoria.']);
         exit;
     }
 
     if ($justificativa === '') {
-        echo json_encode(['success' => false, 'message' => 'A justificativa é obrigatória.']);
+        echo json_encode(['success' => false, 'message' => 'A justificativa e obrigatoria.']);
         exit;
     }
 
     try {
-        $query = 'INSERT INTO baixa (itemId, tipo, dataBaixa, justificativa, documento) VALUES (:itemId, :tipo, :dataBaixa, :justificativa, :documento)';
+        $itemStmt = $conn->prepare("SELECT id, numeroPatrimonio, descricao FROM item WHERE id = :itemId LIMIT 1");
+        $itemStmt->bindValue(':itemId', $itemId, PDO::PARAM_INT);
+        $itemStmt->execute();
+        $item = $itemStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$item) {
+            echo json_encode(['success' => false, 'message' => 'Item nao encontrado.']);
+            exit;
+        }
+
+        $baixaExistenteStmt = $conn->prepare("SELECT id, tipo FROM baixa WHERE itemId = :itemId ORDER BY id DESC LIMIT 1");
+        $baixaExistenteStmt->bindValue(':itemId', $itemId, PDO::PARAM_INT);
+        $baixaExistenteStmt->execute();
+        $baixaExistente = $baixaExistenteStmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($baixaExistente) {
+            echo json_encode(['success' => false, 'message' => 'Este item ja esta desativado pela baixa ' . $baixaExistente['tipo'] . '.']);
+            exit;
+        }
+
+        $conn->beginTransaction();
+
+        $query = 'INSERT INTO baixa (itemId, tipo, dataBaixa, justificativa, documento)
+            VALUES (:itemId, :tipo, :dataBaixa, :justificativa, :documento)';
         $stmt = $conn->prepare($query);
         $stmt->bindValue(':itemId', $itemId, PDO::PARAM_INT);
         $stmt->bindValue(':tipo', $tipo, PDO::PARAM_STR);
@@ -76,22 +107,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bindValue(':justificativa', $justificativa, PDO::PARAM_STR);
         $stmt->bindValue(':documento', $documento, PDO::PARAM_STR);
         $stmt->execute();
-        $id = (int) $conn->lastInsertId();
+        $id = (int)$conn->lastInsertId();
+
         registrarHistorico(
             $conn,
             'CRIAR',
             'baixa',
             $id,
-            'Registrou baixa do item ID ' . $itemId . ' com tipo "' . $tipo . '".',
+            'Registrou baixa do patrimonio ' . $item['numeroPatrimonio'] . ' com tipo "' . $tipo . '".',
             obterUsuarioIdDaRequisicao($input)
         );
 
-        echo json_encode(['success' => true, 'message' => 'Baixa registrada com sucesso.', 'id' => $id]);
+        $conn->commit();
+
+        echo json_encode([
+            'success' => true,
+            'message' => 'Baixa registrada com sucesso. O item foi desativado como ' . $tipo . '.',
+            'id' => $id
+        ]);
     } catch (PDOException $e) {
+        if ($conn->inTransaction()) {
+            $conn->rollBack();
+        }
         echo json_encode(['success' => false, 'message' => 'Erro ao registrar baixa: ' . $e->getMessage()]);
     }
     exit;
 }
 
 http_response_code(405);
-echo json_encode(['success' => false, 'message' => 'Método não permitido.']);
+echo json_encode(['success' => false, 'message' => 'Metodo nao permitido.']);

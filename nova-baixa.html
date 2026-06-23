@@ -7,10 +7,7 @@
     <link rel="stylesheet" href="fonts/css/all.min.css">
     <link rel="stylesheet" href="css/main.css">
     <style>
-        .form-container {
-            max-width: 700px;
-            margin: 0 auto;
-        }
+        .form-container { max-width: 850px; margin: 0 auto; }
         .form-title {
             font-size: 20px;
             color: var(--azul-escuro);
@@ -19,15 +16,35 @@
             align-items: center;
             gap: 10px;
         }
-        .form-title i {
-            color: var(--azul);
+        .form-title i { color: var(--azul); }
+        .form-row-duas-colunas {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
         }
-        .btn-back {
-            background: var(--cinza);
-            color: white;
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
         }
-        .btn-back:hover {
-            background: var(--cinza-escuro);
+        .btn-back { background: var(--cinza); color: white; }
+        .btn-back:hover { background: var(--cinza-escuro); }
+        .item-preview {
+            border: 1px solid var(--borda);
+            background: var(--cinza-claro);
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 15px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px 16px;
+        }
+        .item-preview span { color: var(--cinza); font-size: 12px; display: block; }
+        .item-preview strong { color: var(--azul-escuro); }
+        @media (max-width: 768px) {
+            .form-row-duas-colunas,
+            .item-preview { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -41,16 +58,15 @@
             <nav class="menu">
                 <a href="dashboard.html" class="menu-item"><i class="fas fa-home"></i> Dashboard</a>
                 <a href="secretarias.html" class="menu-item"><i class="fas fa-landmark"></i> Secretarias</a>
-                
-                <a href="responsaveis.html" class="menu-item"><i class="fas fa-user-check"></i> Responsáveis</a>
-                <a href="inventarios.html" class="menu-item"><i class="fas fa-clipboard-list"></i> Inventários</a>
+                <a href="responsaveis.html" class="menu-item"><i class="fas fa-user-check"></i> Responsaveis</a>
+                <a href="inventarios.html" class="menu-item"><i class="fas fa-clipboard-list"></i> Inventarios</a>
                 <a href="baixas.html" class="menu-item active"><i class="fas fa-file-alt"></i> Baixas</a>
-                <a href="historicos.html" class="menu-item"><i class="fas fa-history"></i> Histórico</a>
+                <a href="historicos.html" class="menu-item"><i class="fas fa-history"></i> Historico</a>
             </nav>
             <div class="user-info">
                 <div class="user-avatar user-avatar-dynamic">--</div>
                 <div>
-                    <h4 class="user-name">Usuário</h4>
+                    <h4 class="user-name">Usuario</h4>
                     <p class="user-email" style="font-size: 11px;"></p>
                 </div>
             </div>
@@ -70,38 +86,44 @@
             <div class="card form-container">
                 <div class="form-title"><i class="fas fa-file-alt"></i> Registrar nova baixa</div>
                 <form onsubmit="event.preventDefault(); salvarBaixa()">
+                    <div class="form-group">
+                        <label>Item patrimonial ativo *</label>
+                        <select id="itemBaixa" required>
+                            <option value="">Carregando itens...</option>
+                        </select>
+                    </div>
+
+                    <div class="item-preview" id="itemPreview">
+                        <div><span>Patrimonio</span><strong>-</strong></div>
+                        <div><span>Valor</span><strong>-</strong></div>
+                        <div><span>Departamento</span><strong>-</strong></div>
+                        <div><span>Responsavel</span><strong>-</strong></div>
+                    </div>
+
                     <div class="form-row-duas-colunas">
-                        <div class="form-group">
-                            <label>Item *</label>
-                            <input type="text" id="itemBaixa" placeholder="Ex: Computador Desktop" required>
-                        </div>
                         <div class="form-group">
                             <label>Tipo de Baixa *</label>
                             <select id="tipoBaixa" required>
                                 <option value="">Selecione...</option>
-                                <option value="doacao">DOAÇÃO</option>
-                                <option value="perda">PERDA</option>
-                                <option value="descarte">DESCARTADA</option>
+                                <option value="DOACAO">DOACAO</option>
+                                <option value="INUTILIZACAO">INUTILIZACAO</option>
+                                <option value="PERDIDO">PERDIDO</option>
+                                <option value="CADASTRAMENTO_INDEVIDO">CADASTRAMENTO INDEVIDO</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="form-row-duas-colunas">
                         <div class="form-group">
                             <label>Data *</label>
                             <input type="date" id="dataBaixa" required>
                         </div>
-                        <div class="form-group">
-                            <label>Quantidade *</label>
-                            <input type="number" id="quantidadeBaixa" min="1" value="1" required>
-                        </div>
                     </div>
+
                     <div class="form-group">
                         <label>Justificativa *</label>
                         <textarea id="justificativaBaixa" placeholder="Motivo da baixa" rows="4" required></textarea>
                     </div>
                     <div class="form-group">
-                        <label>Observações</label>
-                        <textarea id="observacoesBaixa" placeholder="Notas adicionais" rows="3"></textarea>
+                        <label>Documento / observacoes</label>
+                        <textarea id="documentoBaixa" placeholder="Numero do processo, documento ou notas adicionais" rows="3"></textarea>
                     </div>
                     <div class="form-actions">
                         <button type="button" class="btn btn-back" onclick="window.location.href='baixas.html'"><i class="fas fa-arrow-left"></i> Voltar</button>
@@ -112,21 +134,140 @@
         </main>
     </div>
     <script>
-        function salvarBaixa() {
-            var item = document.getElementById('itemBaixa').value.trim();
-            var tipo = document.getElementById('tipoBaixa').value;
-            var data = document.getElementById('dataBaixa').value;
-            var quantidade = document.getElementById('quantidadeBaixa').value;
-            var justificativa = document.getElementById('justificativaBaixa').value.trim();
-            if (!item || !tipo || !data || !quantidade || !justificativa) {
-                alert('Preencha todos os campos obrigatórios para registrar a baixa.');
+        var itensAtivos = [];
+
+        function apiBaseUrl() {
+            if (typeof getApiBaseUrl === 'function') {
+                return getApiBaseUrl();
+            }
+            return '/backend/api';
+        }
+
+        function usuarioLogado() {
+            try {
+                return JSON.parse(sessionStorage.getItem('usuario') || '{}');
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function moeda(valor) {
+            return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        function itemSelecionado() {
+            var id = document.getElementById('itemBaixa').value;
+            return itensAtivos.find(function (item) {
+                return String(item.id) === String(id);
+            });
+        }
+
+        function atualizarPreview() {
+            var item = itemSelecionado();
+            var preview = document.getElementById('itemPreview');
+            if (!item) {
+                preview.innerHTML = '<div><span>Patrimonio</span><strong>-</strong></div>' +
+                    '<div><span>Valor</span><strong>-</strong></div>' +
+                    '<div><span>Departamento</span><strong>-</strong></div>' +
+                    '<div><span>Responsavel</span><strong>-</strong></div>';
                 return;
             }
-            alert('Baixa registrada com sucesso!');
-            window.location.href = 'baixas.html';
+
+            preview.innerHTML = '<div><span>Patrimonio</span><strong>' + (item.numeroPatrimonio || '-') + '</strong></div>' +
+                '<div><span>Valor</span><strong>' + moeda(item.valor) + '</strong></div>' +
+                '<div><span>Departamento</span><strong>' + (item.departamento || '-') + '</strong></div>' +
+                '<div><span>Responsavel</span><strong>' + (item.responsavel || 'Sem responsavel') + '</strong></div>';
         }
+
+        async function carregarItensAtivos() {
+            var select = document.getElementById('itemBaixa');
+            try {
+                var response = await fetch(apiBaseUrl() + '/itens.php?ativos=1');
+                var data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.message || 'Nao foi possivel carregar itens.');
+                }
+
+                itensAtivos = data.data || [];
+                select.innerHTML = '<option value="">Selecione o item...</option>';
+
+                if (itensAtivos.length === 0) {
+                    select.innerHTML = '<option value="">Nenhum item ativo disponivel</option>';
+                    return;
+                }
+
+                itensAtivos.forEach(function (item) {
+                    var option = document.createElement('option');
+                    option.value = item.id;
+                    option.textContent = (item.numeroPatrimonio || '') + ' - ' + (item.descricao || '') + ' (' + (item.unidade || 'Sem unidade') + ')';
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error(error);
+                select.innerHTML = '<option value="">Erro ao carregar itens</option>';
+                alert('Erro ao carregar itens ativos:\n' + error.message);
+            }
+        }
+
+        async function salvarBaixa() {
+            var itemId = document.getElementById('itemBaixa').value;
+            var tipo = document.getElementById('tipoBaixa').value;
+            var dataBaixa = document.getElementById('dataBaixa').value;
+            var justificativa = document.getElementById('justificativaBaixa').value.trim();
+            var documento = document.getElementById('documentoBaixa').value.trim();
+            var botao = document.querySelector('button[type="submit"]');
+            var usuario = usuarioLogado();
+
+            if (!itemId || !tipo || !dataBaixa || !justificativa) {
+                alert('Preencha todos os campos obrigatorios para registrar a baixa.');
+                return;
+            }
+
+            try {
+                if (botao) {
+                    botao.disabled = true;
+                    botao.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+                }
+
+                var response = await fetch(apiBaseUrl() + '/baixas.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        itemId: itemId,
+                        tipo: tipo,
+                        dataBaixa: dataBaixa,
+                        justificativa: justificativa,
+                        documento: documento,
+                        usuarioId: usuario.id || null
+                    })
+                });
+                var data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.message || 'Nao foi possivel registrar a baixa.');
+                }
+
+                alert(data.message);
+                window.location.href = 'baixas.html';
+            } catch (error) {
+                console.error(error);
+                alert('Erro ao salvar baixa:\n' + error.message);
+            } finally {
+                if (botao) {
+                    botao.disabled = false;
+                    botao.innerHTML = '<i class="fas fa-save"></i> Salvar';
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('dataBaixa').value = new Date().toISOString().slice(0, 10);
+            carregarItensAtivos();
+        });
+        document.getElementById('itemBaixa').addEventListener('change', atualizarPreview);
     </script>
     <script src="js/main.js"></script>
-<script src="js/auth.js"></script>
+    <script src="js/auth.js"></script>
 </body>
 </html>

@@ -95,6 +95,7 @@ function gerarNumeroPatrimonio($conn) {
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     try {
         $departamentoId = isset($_GET['departamentoId']) ? (int)$_GET['departamentoId'] : 0;
+        $somenteAtivos = isset($_GET['ativos']) && (int)$_GET['ativos'] === 1;
         $query = "SELECT i.id, i.numeroPatrimonio, i.descricao, i.marca, i.modelo, i.numeroSerie, i.estado,
             i.valor, i.notaFiscal, i.dataAquisicao, i.observacoes, i.departamentoId, i.localizacaoId, i.responsavelId, i.tipoMaterialId,
             d.nome AS departamento,
@@ -102,15 +103,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             u.nome AS unidade,
             u.secretariaId,
             r.nome AS responsavel,
-            tm.nome AS tipoMaterial
+            tm.nome AS tipoMaterial,
+            b.id AS baixaId,
+            b.tipo AS baixaTipo,
+            b.dataBaixa,
+            CASE WHEN b.id IS NULL THEN 1 ELSE 0 END AS ativo,
+            CASE WHEN b.id IS NULL THEN 'ATIVO' ELSE b.tipo END AS statusPatrimonio
         FROM item i
         LEFT JOIN departamento d ON i.departamentoId = d.id
         LEFT JOIN unidade u ON d.unidadeId = u.id
         LEFT JOIN responsavel r ON i.responsavelId = r.id
-        LEFT JOIN tipo_material tm ON i.tipoMaterialId = tm.id";
+        LEFT JOIN tipo_material tm ON i.tipoMaterialId = tm.id
+        LEFT JOIN baixa b ON b.itemId = i.id
+            AND b.id = (SELECT MAX(b2.id) FROM baixa b2 WHERE b2.itemId = i.id)";
+
+        $where = [];
 
         if ($departamentoId > 0) {
-            $query .= " WHERE i.departamentoId = :departamentoId";
+            $where[] = "i.departamentoId = :departamentoId";
+        }
+
+        if ($somenteAtivos) {
+            $where[] = "b.id IS NULL";
+        }
+
+        if ($where) {
+            $query .= " WHERE " . implode(" AND ", $where);
         }
 
         $query .= " ORDER BY i.numeroPatrimonio";

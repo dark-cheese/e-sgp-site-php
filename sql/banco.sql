@@ -208,9 +208,14 @@ CREATE TABLE inventario (
     dataFim DATE,
     status VARCHAR(20) NOT NULL CHECK (status IN ('ABERTO','CONCLUIDO','SUSPENSO')),
     unidadeId INTEGER,
+    responsavelId INTEGER,
     CONSTRAINT pk_inventario PRIMARY KEY (id),
     CONSTRAINT fk_inventario_unidade FOREIGN KEY (unidadeId)
         REFERENCES unidade(id)
+        ON UPDATE RESTRICT
+        ON DELETE SET NULL,
+    CONSTRAINT fk_inventario_responsavel FOREIGN KEY (responsavelId)
+        REFERENCES responsavel(id)
         ON UPDATE RESTRICT
         ON DELETE SET NULL
 );

@@ -4,40 +4,43 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>e-SGP - Itens</title>
-    
-    <!-- Ícones -->
     <link rel="stylesheet" href="fonts/css/all.min.css">
-    
-    <!-- CSS -->
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/itens.css">
+    <style>
+        .item-desativado { background: #F4F5F7; color: var(--cinza); }
+        .status-patrimonio {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            background: var(--verde);
+            color: var(--branco);
+        }
+        .status-patrimonio.desativado { background: var(--cinza-escuro); }
+    </style>
 </head>
 <body>
     <div class="dashboard">
         <aside class="sidebar">
             <div class="logo-area">
-                <div class="logo-icon">
-                    <i class="fas fa-building"></i>
-                </div>
-                <div class="logo-text">
-                    <h2>e-SGP</h2>
-                </div>
+                <div class="logo-icon"><i class="fas fa-building"></i></div>
+                <div class="logo-text"><h2>e-SGP</h2></div>
             </div>
 
             <nav class="menu">
                 <a href="dashboard.html" class="menu-item"><i class="fas fa-home"></i> Dashboard</a>
                 <a href="secretarias.html" class="menu-item"><i class="fas fa-landmark"></i> Secretarias</a>
-            
-                <a href="responsaveis.html" class="menu-item"><i class="fas fa-user-check"></i> Responsáveis</a>
-                <a href="inventarios.html" class="menu-item"><i class="fas fa-clipboard-list"></i> Inventários</a>
+                <a href="responsaveis.html" class="menu-item"><i class="fas fa-user-check"></i> Responsaveis</a>
+                <a href="inventarios.html" class="menu-item"><i class="fas fa-clipboard-list"></i> Inventarios</a>
                 <a href="baixas.html" class="menu-item"><i class="fas fa-file-alt"></i> Baixas</a>
-                <a href="historicos.html" class="menu-item"><i class="fas fa-history"></i> Histórico</a>
+                <a href="historicos.html" class="menu-item"><i class="fas fa-history"></i> Historico</a>
             </nav>
 
             <div class="user-info">
                 <div class="user-avatar user-avatar-dynamic">--</div>
                 <div>
-                    <h4 class="user-name">Usuário</h4>
+                    <h4 class="user-name">Usuario</h4>
                     <p class="user-email" style="font-size: 11px;"></p>
                 </div>
             </div>
@@ -66,13 +69,13 @@
 
             <div class="filter-section">
                 <div class="filter-row">
-                    <input type="text" placeholder="Buscar por nº patrimônio ou descrição...">
+                    <input type="text" placeholder="Buscar por patrimonio ou descricao...">
                     <select>
                         <option>Todos os estados</option>
-                        <option>Ótimo</option>
+                        <option>Otimo</option>
                         <option>Bom</option>
                         <option>Ruim</option>
-                        <option>Péssimo</option>
+                        <option>Pessimo</option>
                     </select>
                     <button class="btn btn-primary">Filtrar</button>
                 </div>
@@ -86,55 +89,72 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Nº Patrimônio</th>
-                        <th>Descrição</th>
+                        <th>Patrimonio</th>
+                        <th>Descricao</th>
                         <th>Departamento</th>
                         <th>Estado</th>
-                        <th>Responsável</th>
-                        <th>Ações</th>
+                        <th>Status</th>
+                        <th>Responsavel</th>
+                        <th>Acoes</th>
                     </tr>
                 </thead>
                 <tbody id="itensTableBody">
                     <tr>
-                        <td colspan="6">Carregando itens...</td>
+                        <td colspan="7">Carregando itens...</td>
                     </tr>
                 </tbody>
             </table>
-
         </main>
     </div>
 
     <script>
+        function moeda(valor) {
+            return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
         async function carregarItens() {
             const params = new URLSearchParams(window.location.search);
-            const secretariaId = params.get('secretariaId');
-            const unidadeId = params.get('unidadeId');
-            const departamentoId = params.get('departamentoId');
+            const secretariaId = params.get('secretariaId') || '';
+            const unidadeId = params.get('unidadeId') || '';
+            const departamentoId = params.get('departamentoId') || '';
             document.getElementById('breadcrumbUnidades').href = 'unidades.html?secretariaId=' + encodeURIComponent(secretariaId);
             document.getElementById('breadcrumbDepartamentos').href = 'departamentos.html?secretariaId=' + encodeURIComponent(secretariaId) + '&unidadeId=' + encodeURIComponent(unidadeId);
+
             const tbody = document.getElementById('itensTableBody');
             const response = await fetch(getApiBaseUrl() + '/itens.php?departamentoId=' + encodeURIComponent(departamentoId));
             const data = await response.json();
             tbody.innerHTML = '';
+
             if (!data.success || !data.data.length) {
-                tbody.innerHTML = '<tr><td colspan="6">Nenhum patrimônio encontrado para o departamento selecionado.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7">Nenhum patrimonio encontrado para o departamento selecionado.</td></tr>';
                 return;
             }
+
             let total = 0;
             data.data.forEach(function (item) {
                 total += Number(item.valor || 0);
                 const tr = document.createElement('tr');
+                const desativado = String(item.ativo) === '0';
+                const statusClasse = desativado ? 'status-patrimonio desativado' : 'status-patrimonio';
+
+                if (desativado) {
+                    tr.classList.add('item-desativado');
+                }
+
                 tr.innerHTML = '<td>' + (item.numeroPatrimonio || '') + '</td>' +
                     '<td>' + (item.descricao || '') + '</td>' +
                     '<td>' + (item.departamento || '') + '</td>' +
                     '<td>' + (item.estado || '') + '</td>' +
-                    '<td>' + (item.responsavel || 'Sem responsável') + '</td>' +
+                    '<td><span class="' + statusClasse + '">' + (item.statusPatrimonio || 'ATIVO') + '</span></td>' +
+                    '<td>' + (item.responsavel || 'Sem responsavel') + '</td>' +
                     '<td><button class="action-btn"><i class="fas fa-eye"></i></button></td>';
                 tbody.appendChild(tr);
             });
+
             document.getElementById('totalItens').textContent = data.data.length;
-            document.getElementById('valorTotalItens').textContent = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            document.getElementById('valorTotalItens').textContent = moeda(total);
         }
+
         document.addEventListener('DOMContentLoaded', carregarItens);
     </script>
     <script src="js/auth.js"></script>

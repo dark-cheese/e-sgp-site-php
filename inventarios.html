@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>e-SGP - Inventário</title>
+    <title>e-SGP - Inventarios</title>
     <link rel="stylesheet" href="fonts/css/all.min.css">
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/dashboard.css">
@@ -20,16 +20,15 @@
             <nav class="menu">
                 <a href="dashboard.html" class="menu-item"><i class="fas fa-home"></i><span>Dashboard</span></a>
                 <a href="secretarias.html" class="menu-item"><i class="fas fa-landmark"></i><span>Secretarias</span></a>
-            
-                <a href="responsaveis.html" class="menu-item"><i class="fas fa-user-check"></i><span>Responsáveis</span></a>
-                <a href="inventarios.html" class="menu-item active"><i class="fas fa-clipboard-list"></i><span>Inventários</span></a>
+                <a href="responsaveis.html" class="menu-item"><i class="fas fa-user-check"></i><span>Responsaveis</span></a>
+                <a href="inventarios.html" class="menu-item active"><i class="fas fa-clipboard-list"></i><span>Inventarios</span></a>
                 <a href="baixas.html" class="menu-item"><i class="fas fa-file-alt"></i><span>Baixas</span></a>
-                <a href="historicos.html" class="menu-item"><i class="fas fa-history"></i><span>Histórico</span></a>
+                <a href="historicos.html" class="menu-item"><i class="fas fa-history"></i><span>Historico</span></a>
             </nav>
             <div class="user-info">
                 <div class="user-avatar user-avatar-dynamic">--</div>
                 <div class="user-details">
-                    <h4 class="user-name">Usuário</h4>
+                    <h4 class="user-name">Usuario</h4>
                     <p class="user-email"></p>
                 </div>
             </div>
@@ -37,15 +36,15 @@
         <main class="main-content">
             <header class="header">
                 <div class="page-title">
-                    <h1>Inventários</h1>
-                    <div class="breadcrumb"><span>Inventários</span></div>
+                    <h1>Inventarios</h1>
+                    <div class="breadcrumb"><span>Inventarios</span></div>
                 </div>
                 <div class="date-display"></div>
             </header>
             <div class="card">
                 <div class="card-header">
-                    <h2>Inventários Cadastrados</h2>
-                    <button class="btn btn-primary" onclick="window.location.href='novo-inventario.html'">Novo Inventário</button>
+                    <h2>Inventarios Cadastrados</h2>
+                    <button class="btn btn-primary" onclick="window.location.href='novo-inventario.html'">Novo Inventario</button>
                 </div>
                 <table class="table">
                     <thead>
@@ -53,13 +52,16 @@
                             <th>Ano</th>
                             <th>Nome</th>
                             <th>Unidade</th>
+                            <th>Responsavel</th>
+                            <th>Itens</th>
+                            <th>Valor Total</th>
                             <th>Status</th>
-                            <th>Ações</th>
+                            <th>Acoes</th>
                         </tr>
                     </thead>
                     <tbody id="inventarioTableBody">
                         <tr>
-                            <td colspan="5">Carregando inventários...</td>
+                            <td colspan="8">Carregando inventarios...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -87,12 +89,12 @@
                 tbody.innerHTML = '';
 
                 if (!result.success) {
-                    tbody.innerHTML = '<tr><td colspan="5">' + (result.message || 'Erro ao carregar inventários.') + '</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="8">' + (result.message || 'Erro ao carregar inventarios.') + '</td></tr>';
                     return;
                 }
 
                 if (!result.data || result.data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5">Nenhum inventário cadastrado.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="8">Nenhum inventario cadastrado.</td></tr>';
                     return;
                 }
 
@@ -101,13 +103,16 @@
                     row.innerHTML = '<td>' + (inventario.ano || '') + '</td>' +
                         '<td>' + (inventario.nome || '') + '</td>' +
                         '<td>' + (inventario.unidade || '') + '</td>' +
+                        '<td>' + (inventario.responsavel || '') + '</td>' +
+                        '<td>' + (inventario.itensVinculados || 0) + '</td>' +
+                        '<td>' + Number(inventario.valorTotal || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) + '</td>' +
                         '<td>' + (inventario.status || '') + '</td>' +
-                        '<td><button class="action-btn">Ver</button></td>';
+                        '<td><button class="action-btn" onclick="window.location.href=\'inventario-relatorio.html?id=' + encodeURIComponent(inventario.id) + '\'">Ver</button></td>';
                     tbody.appendChild(row);
                 });
             } catch (error) {
                 const tbody = document.getElementById('inventarioTableBody');
-                tbody.innerHTML = '<tr><td colspan="5">Erro ao carregar inventários.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8">Erro ao carregar inventarios.</td></tr>';
                 console.error(error);
             }
         }

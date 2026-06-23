@@ -7,29 +7,36 @@
     <link rel="stylesheet" href="fonts/css/all.min.css">
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/dashboard.css">
+    <style>
+        .status-baixa {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            background: var(--cinza-escuro);
+            color: var(--branco);
+            font-size: 11px;
+        }
+    </style>
 </head>
 <body>
     <div class="dashboard">
         <aside class="sidebar">
             <div class="logo-area">
                 <div class="logo-icon"><i class="fas fa-building"></i></div>
-                <div class="logo-text">
-                    <h2>e-SGP</h2>
-                </div>
+                <div class="logo-text"><h2>e-SGP</h2></div>
             </div>
             <nav class="menu">
                 <a href="dashboard.html" class="menu-item"><i class="fas fa-home"></i><span>Dashboard</span></a>
                 <a href="secretarias.html" class="menu-item"><i class="fas fa-landmark"></i><span>Secretarias</span></a>
-                
-                <a href="responsaveis.html" class="menu-item"><i class="fas fa-user-check"></i><span>Responsáveis</span></a>
-                <a href="inventarios.html" class="menu-item"><i class="fas fa-clipboard-list"></i><span>Inventários</span></a>
+                <a href="responsaveis.html" class="menu-item"><i class="fas fa-user-check"></i><span>Responsaveis</span></a>
+                <a href="inventarios.html" class="menu-item"><i class="fas fa-clipboard-list"></i><span>Inventarios</span></a>
                 <a href="baixas.html" class="menu-item active"><i class="fas fa-file-alt"></i><span>Baixas</span></a>
-                <a href="historicos.html" class="menu-item"><i class="fas fa-history"></i><span>Histórico</span></a>
+                <a href="historicos.html" class="menu-item"><i class="fas fa-history"></i><span>Historico</span></a>
             </nav>
             <div class="user-info">
                 <div class="user-avatar user-avatar-dynamic">--</div>
                 <div class="user-details">
-                    <h4 class="user-name">Usuário</h4>
+                    <h4 class="user-name">Usuario</h4>
                     <p class="user-email"></p>
                 </div>
             </div>
@@ -51,15 +58,17 @@
                     <thead>
                         <tr>
                             <th>Item</th>
-                            <th>Tipo</th>
+                            <th>Unidade</th>
+                            <th>Responsavel</th>
+                            <th>Status</th>
                             <th>Data</th>
+                            <th>Valor</th>
                             <th>Justificativa</th>
-                            <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody id="baixasTableBody">
                         <tr>
-                            <td colspan="5">Carregando baixas...</td>
+                            <td colspan="7">Carregando baixas...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -71,12 +80,11 @@
             if (typeof getApiBaseUrl === 'function') {
                 return getApiBaseUrl();
             }
-            var path = window.location.pathname;
-            var index = path.indexOf('/frontend/');
-            if (index !== -1) {
-                return path.substring(0, index) + '/backend/api';
-            }
             return '/backend/api';
+        }
+
+        function moeda(valor) {
+            return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         }
 
         async function carregarBaixas() {
@@ -87,12 +95,12 @@
                 tbody.innerHTML = '';
 
                 if (!result.success) {
-                    tbody.innerHTML = '<tr><td colspan="5">' + (result.message || 'Erro ao carregar baixas.') + '</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="7">' + (result.message || 'Erro ao carregar baixas.') + '</td></tr>';
                     return;
                 }
 
                 if (!result.data || result.data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5">Nenhuma baixa registrada.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="7">Nenhuma baixa registrada.</td></tr>';
                     return;
                 }
 
@@ -100,15 +108,17 @@
                     const itemLabel = baixa.itemNumero ? baixa.itemNumero + ' - ' + (baixa.itemDescricao || '') : '(sem item)';
                     const row = document.createElement('tr');
                     row.innerHTML = '<td>' + itemLabel + '</td>' +
-                        '<td>' + (baixa.tipo || '') + '</td>' +
+                        '<td>' + (baixa.unidade || '') + '</td>' +
+                        '<td>' + (baixa.responsavel || 'Sem responsavel') + '</td>' +
+                        '<td><span class="status-baixa">' + (baixa.tipo || '') + '</span></td>' +
                         '<td>' + (baixa.dataBaixa || '') + '</td>' +
-                        '<td>' + (baixa.justificativa || '') + '</td>' +
-                        '<td><button class="action-btn">Ver</button></td>';
+                        '<td>' + moeda(baixa.itemValor) + '</td>' +
+                        '<td>' + (baixa.justificativa || '') + '</td>';
                     tbody.appendChild(row);
                 });
             } catch (error) {
                 const tbody = document.getElementById('baixasTableBody');
-                tbody.innerHTML = '<tr><td colspan="5">Erro ao carregar baixas.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7">Erro ao carregar baixas.</td></tr>';
                 console.error(error);
             }
         }

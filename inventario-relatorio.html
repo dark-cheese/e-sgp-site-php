@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>e-SGP - Relatorio do Inventario</title>
+    <link rel="stylesheet" href="fonts/css/all.min.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <style>
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .summary-item {
+            border: 1px solid var(--borda);
+            background: var(--cinza-claro);
+            border-radius: 4px;
+            padding: 12px;
+        }
+        .summary-item span {
+            display: block;
+            color: var(--cinza);
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+        .summary-item strong {
+            color: var(--azul-escuro);
+            font-size: 15px;
+        }
+        .status-patrimonio {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            background: var(--verde);
+            color: var(--branco);
+        }
+        .status-patrimonio.desativado {
+            background: var(--cinza-escuro);
+        }
+        .print-title {
+            display: none;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+        }
+        @media (max-width: 900px) {
+            .summary-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media print {
+            body {
+                background: #fff;
+                color: #000;
+                font-size: 11px;
+            }
+            .sidebar,
+            .header,
+            .no-print {
+                display: none !important;
+            }
+            .dashboard {
+                display: block;
+                min-height: auto;
+            }
+            .main-content {
+                margin: 0;
+                padding: 0;
+            }
+            .card {
+                border: none;
+                padding: 0;
+                margin: 0;
+            }
+            .print-title {
+                display: block;
+                margin-bottom: 14px;
+            }
+            .summary-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 8px;
+            }
+            .summary-item {
+                background: #fff;
+                border: 1px solid #999;
+                padding: 8px;
+            }
+            table {
+                font-size: 10px;
+            }
+            th,
+            td {
+                padding: 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <div class="logo-area">
+                <div class="logo-icon"><i class="fas fa-building"></i></div>
+                <div class="logo-text"><h2>e-SGP</h2></div>
+            </div>
+            <nav class="menu">
+                <a href="dashboard.html" class="menu-item"><i class="fas fa-home"></i><span>Dashboard</span></a>
+                <a href="secretarias.html" class="menu-item"><i class="fas fa-landmark"></i><span>Secretarias</span></a>
+                <a href="responsaveis.html" class="menu-item"><i class="fas fa-user-check"></i><span>Responsaveis</span></a>
+                <a href="inventarios.html" class="menu-item active"><i class="fas fa-clipboard-list"></i><span>Inventarios</span></a>
+                <a href="baixas.html" class="menu-item"><i class="fas fa-file-alt"></i><span>Baixas</span></a>
+                <a href="historicos.html" class="menu-item"><i class="fas fa-history"></i><span>Historico</span></a>
+            </nav>
+            <div class="user-info">
+                <div class="user-avatar user-avatar-dynamic">--</div>
+                <div class="user-details">
+                    <h4 class="user-name">Usuario</h4>
+                    <p class="user-email"></p>
+                </div>
+            </div>
+        </aside>
+        <main class="main-content">
+            <header class="header">
+                <div class="page-title">
+                    <h1>Relatorio do Inventario</h1>
+                    <div class="breadcrumb">
+                        <a href="inventarios.html">Inventarios</a>
+                        <i class="fas fa-chevron-right"></i>
+                        <span>Relatorio</span>
+                    </div>
+                </div>
+                <div class="action-group no-print">
+                    <button class="btn btn-outline" onclick="window.location.href='inventarios.html'">
+                        <i class="fas fa-arrow-left"></i> Voltar
+                    </button>
+                    <button class="btn btn-primary" onclick="window.print()">
+                        <i class="fas fa-print"></i> Imprimir Relatorio
+                    </button>
+                </div>
+            </header>
+
+            <div class="card">
+                <div class="print-title">
+                    <h1>Relatorio do Inventario</h1>
+                    <p>e-SGP - Sistema de Gestao de Patrimonio</p>
+                </div>
+
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <span>Inventario</span>
+                        <strong id="resumoNome">-</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span>Ano</span>
+                        <strong id="resumoAno">-</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span>Unidade</span>
+                        <strong id="resumoUnidade">-</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span>Responsavel</span>
+                        <strong id="resumoResponsavel">-</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span>Periodo</span>
+                        <strong id="resumoPeriodo">-</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span>Status</span>
+                        <strong id="resumoStatus">-</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span>Total de Itens</span>
+                        <strong id="resumoItens">0</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span>Valor Total</span>
+                        <strong id="resumoValor">R$ 0,00</strong>
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Patrimonio</th>
+                                <th>Descricao</th>
+                                <th>Departamento</th>
+                                <th>Responsavel</th>
+                                <th>Data Aquisicao</th>
+                                <th>Estado</th>
+                                <th>Status</th>
+                                <th>Valor</th>
+                                <th>Observacao</th>
+                            </tr>
+                        </thead>
+                        <tbody id="itensRelatorioBody">
+                            <tr>
+                                <td colspan="9">Carregando itens do inventario...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function apiBaseUrl() {
+            if (typeof getApiBaseUrl === 'function') {
+                return getApiBaseUrl();
+            }
+            return '/backend/api';
+        }
+
+        function moeda(valor) {
+            return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        function texto(valor, fallback) {
+            return valor === null || valor === undefined || valor === '' ? (fallback || '-') : valor;
+        }
+
+        function preencherResumo(inventario, totalItens, valorTotal) {
+            document.getElementById('resumoNome').textContent = texto(inventario.nome);
+            document.getElementById('resumoAno').textContent = texto(inventario.ano);
+            document.getElementById('resumoUnidade').textContent = texto(inventario.unidade);
+            document.getElementById('resumoResponsavel').textContent = texto(inventario.responsavel, 'Sem responsavel');
+            document.getElementById('resumoPeriodo').textContent = texto(inventario.dataInicio) + ' a ' + texto(inventario.dataFim);
+            document.getElementById('resumoStatus').textContent = texto(inventario.status);
+            document.getElementById('resumoItens').textContent = totalItens || 0;
+            document.getElementById('resumoValor').textContent = moeda(valorTotal);
+        }
+
+        function renderizarItens(itens) {
+            var tbody = document.getElementById('itensRelatorioBody');
+            tbody.innerHTML = '';
+
+            if (!itens || itens.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9">Nenhum item vinculado a este inventario.</td></tr>';
+                return;
+            }
+
+            itens.forEach(function (item) {
+                var row = document.createElement('tr');
+                var desativado = String(item.ativo) === '0';
+                var statusClasse = desativado ? 'status-patrimonio desativado' : 'status-patrimonio';
+                row.innerHTML = '<td>' + texto(item.numeroPatrimonio) + '</td>' +
+                    '<td>' + texto(item.descricao) + '</td>' +
+                    '<td>' + texto(item.departamento) + '</td>' +
+                    '<td>' + texto(item.responsavel, 'Sem responsavel') + '</td>' +
+                    '<td>' + texto(item.dataAquisicao) + '</td>' +
+                    '<td>' + texto(item.estado) + '</td>' +
+                    '<td><span class="' + statusClasse + '">' + texto(item.statusPatrimonio, 'ATIVO') + '</span></td>' +
+                    '<td>' + moeda(item.valor) + '</td>' +
+                    '<td>' + texto(item.observacao, '') + '</td>';
+                tbody.appendChild(row);
+            });
+        }
+
+        async function carregarRelatorio() {
+            var params = new URLSearchParams(window.location.search);
+            var id = params.get('id');
+            var tbody = document.getElementById('itensRelatorioBody');
+
+            if (!id) {
+                tbody.innerHTML = '<tr><td colspan="9">Inventario nao informado.</td></tr>';
+                return;
+            }
+
+            try {
+                var response = await fetch(apiBaseUrl() + '/inventarios.php?id=' + encodeURIComponent(id));
+                var result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(result.message || 'Nao foi possivel carregar o relatorio.');
+                }
+
+                var dados = result.data || {};
+                preencherResumo(dados.inventario || {}, dados.totalItens, dados.valorTotal);
+                renderizarItens(dados.itens || []);
+            } catch (error) {
+                console.error(error);
+                tbody.innerHTML = '<tr><td colspan="9">Erro ao carregar relatorio: ' + error.message + '</td></tr>';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', carregarRelatorio);
+    </script>
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

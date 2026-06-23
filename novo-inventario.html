@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>e-SGP - Novo Inventário</title>
+    <title>e-SGP - Novo Inventario</title>
     <link rel="stylesheet" href="fonts/css/all.min.css">
     <link rel="stylesheet" href="css/main.css">
     <style>
         .form-container {
-            max-width: 700px;
+            max-width: 900px;
             margin: 0 auto;
         }
         .form-title {
@@ -22,12 +22,52 @@
         .form-title i {
             color: var(--azul);
         }
+        .form-row-duas-colunas {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
         .btn-back {
             background: var(--cinza);
             color: white;
         }
         .btn-back:hover {
             background: var(--cinza-escuro);
+        }
+        .inventario-resumo {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            background: var(--cinza-claro);
+            border: 1px solid var(--borda);
+            border-radius: 4px;
+            padding: 12px;
+            margin: 10px 0 15px;
+        }
+        .inventario-resumo strong {
+            color: var(--azul-escuro);
+        }
+        .table-wrapper {
+            overflow-x: auto;
+        }
+        .muted {
+            color: var(--cinza);
+            font-size: 12px;
+        }
+        @media (max-width: 768px) {
+            .form-row-duas-colunas,
+            .inventario-resumo {
+                grid-template-columns: 1fr;
+                flex-direction: column;
+                align-items: stretch;
+            }
         }
     </style>
 </head>
@@ -41,16 +81,15 @@
             <nav class="menu">
                 <a href="dashboard.html" class="menu-item"><i class="fas fa-home"></i> Dashboard</a>
                 <a href="secretarias.html" class="menu-item"><i class="fas fa-landmark"></i> Secretarias</a>
-                
-                <a href="responsaveis.html" class="menu-item"><i class="fas fa-user-check"></i> Responsáveis</a>
-                <a href="inventarios.html" class="menu-item active"><i class="fas fa-clipboard-list"></i> Inventários</a>
+                <a href="responsaveis.html" class="menu-item"><i class="fas fa-user-check"></i> Responsaveis</a>
+                <a href="inventarios.html" class="menu-item active"><i class="fas fa-clipboard-list"></i> Inventarios</a>
                 <a href="baixas.html" class="menu-item"><i class="fas fa-file-alt"></i> Baixas</a>
-                <a href="historicos.html" class="menu-item"><i class="fas fa-history"></i> Histórico</a>
+                <a href="historicos.html" class="menu-item"><i class="fas fa-history"></i> Historico</a>
             </nav>
             <div class="user-info">
                 <div class="user-avatar user-avatar-dynamic">--</div>
                 <div>
-                    <h4 class="user-name">Usuário</h4>
+                    <h4 class="user-name">Usuario</h4>
                     <p class="user-email" style="font-size: 11px;"></p>
                 </div>
             </div>
@@ -58,60 +97,101 @@
         <main class="main-content">
             <header class="header">
                 <div class="page-title">
-                    <h1>Novo Inventário</h1>
+                    <h1>Novo Inventario</h1>
                     <div class="breadcrumb">
-                        <a href="inventarios.html">Inventários</a>
+                        <a href="inventarios.html">Inventarios</a>
                         <i class="fas fa-chevron-right"></i>
-                        <span>Novo Inventário</span>
+                        <span>Novo Inventario</span>
                     </div>
                 </div>
                 <div class="date-display"></div>
             </header>
             <div class="card form-container">
-                <div class="form-title"><i class="fas fa-clipboard-list"></i> Cadastrar novo inventário</div>
+                <div class="form-title"><i class="fas fa-clipboard-list"></i> Cadastrar novo inventario</div>
                 <form onsubmit="event.preventDefault(); salvarInventario()">
                     <div class="form-row-duas-colunas">
                         <div class="form-group">
-                            <label>Nome do Inventário *</label>
-                            <input type="text" id="nomeInventario" placeholder="Ex: Inventário Anual" required>
+                            <label>Nome do Inventario *</label>
+                            <input type="text" id="nomeInventario" placeholder="Ex: Inventario Anual" required>
                         </div>
                         <div class="form-group">
                             <label>Ano *</label>
-                            <input type="number" id="anoInventario" min="2000" max="2100" placeholder="2026" required>
+                            <input type="number" id="anoInventario" min="2000" max="2100" required>
                         </div>
                     </div>
                     <div class="form-row-duas-colunas">
                         <div class="form-group">
                             <label>Unidade *</label>
                             <select id="unidadeInventario" required>
-                                <option value="">Selecione...</option>
+                                <option value="">Carregando...</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>Responsável *</label>
+                            <label>Responsavel *</label>
                             <select id="responsavelInventario" required>
-                                <option value="">Selecione...</option>
+                                <option value="">Carregando...</option>
                             </select>
                         </div>
                     </div>
                     <div class="form-row-duas-colunas">
                         <div class="form-group">
-                            <label>Data de Início *</label>
+                            <label>Data de Inicio *</label>
                             <input type="date" id="dataInventario" required>
                         </div>
+                        <div class="form-group">
+                            <label>Data Final *</label>
+                            <input type="date" id="dataFimInventario" required>
+                        </div>
+                    </div>
+                    <div class="form-row-duas-colunas">
                         <div class="form-group">
                             <label>Status *</label>
                             <select id="statusInventario" required>
                                 <option value="">Selecione...</option>
-                                <option value="aberto">ABERTO</option>
-                                <option value="concluido">CONCLUÍDO</option>
+                                <option value="ABERTO">ABERTO</option>
+                                <option value="CONCLUIDO">CONCLUIDO</option>
+                                <option value="SUSPENSO">SUSPENSO</option>
                             </select>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>Observações</label>
-                        <textarea id="observacoesInventario" placeholder="Informações adicionais" rows="4"></textarea>
+                        <label>Observacoes</label>
+                        <textarea id="observacoesInventario" placeholder="Informacoes adicionais" rows="4"></textarea>
                     </div>
+
+                    <div class="inventario-resumo">
+                        <div>
+                            <strong id="totalItensInventario">0 itens encontrados</strong>
+                            <strong id="valorTotalInventario" style="display:block; margin-top: 4px;">R$ 0,00 em patrimonio</strong>
+                            <div class="muted" id="criterioItensInventario">Selecione unidade, data inicial e data final para consultar os itens.</div>
+                        </div>
+                        <button type="button" class="btn btn-outline" onclick="carregarItensDoPeriodo()">
+                            <i class="fas fa-calculator"></i> Atualizar / Calcular valores
+                        </button>
+                    </div>
+
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Patrimonio</th>
+                                    <th>Descricao</th>
+                                    <th>Departamento</th>
+                                    <th>Responsavel</th>
+                                    <th>Data</th>
+                                    <th>Valor</th>
+                                    <th>Estado</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="itensInventarioBody">
+                                <tr>
+                                    <td colspan="8">Nenhum item carregado.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
                     <div class="form-actions">
                         <button type="button" class="btn btn-back" onclick="window.location.href='inventarios.html'"><i class="fas fa-arrow-left"></i> Voltar</button>
                         <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Salvar</button>
@@ -121,22 +201,218 @@
         </main>
     </div>
     <script>
-        function salvarInventario() {
-            var nome = document.getElementById('nomeInventario').value.trim();
-            var ano = document.getElementById('anoInventario').value;
-            var unidade = document.getElementById('unidadeInventario').value;
-            var responsavel = document.getElementById('responsavelInventario').value;
-            var data = document.getElementById('dataInventario').value;
-            var status = document.getElementById('statusInventario').value;
-            if (!nome || !ano || !unidade || !responsavel || !data || !status) {
-                alert('Preencha todos os campos obrigatórios para cadastrar o inventário.');
+        var itensDoInventario = [];
+
+        function apiBaseUrl() {
+            if (typeof getApiBaseUrl === 'function') {
+                return getApiBaseUrl();
+            }
+            return '/backend/api';
+        }
+
+        function usuarioLogado() {
+            try {
+                return JSON.parse(sessionStorage.getItem('usuario') || '{}');
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function preencherSelect(select, itens, placeholder, textoItem) {
+            select.innerHTML = '<option value="">' + placeholder + '</option>';
+            itens.forEach(function (item) {
+                var option = document.createElement('option');
+                option.value = item.id;
+                option.textContent = textoItem ? textoItem(item) : item.nome;
+                select.appendChild(option);
+            });
+        }
+
+        function moeda(valor) {
+            return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        async function carregarSelects() {
+            var unidadeSelect = document.getElementById('unidadeInventario');
+            var responsavelSelect = document.getElementById('responsavelInventario');
+
+            try {
+                var responses = await Promise.all([
+                    fetch(apiBaseUrl() + '/unidades.php'),
+                    fetch(apiBaseUrl() + '/responsaveis.php')
+                ]);
+                var unidades = await responses[0].json();
+                var responsaveis = await responses[1].json();
+
+                if (!unidades.success) {
+                    throw new Error(unidades.message || 'Nao foi possivel carregar unidades.');
+                }
+                if (!responsaveis.success) {
+                    throw new Error(responsaveis.message || 'Nao foi possivel carregar responsaveis.');
+                }
+
+                preencherSelect(unidadeSelect, unidades.data || [], 'Selecione...', function (unidade) {
+                    return unidade.nome + (unidade.secretaria ? ' - ' + unidade.secretaria : '');
+                });
+                preencherSelect(responsavelSelect, responsaveis.data || [], 'Selecione...', function (responsavel) {
+                    return responsavel.nome + (responsavel.cargo ? ' - ' + responsavel.cargo : '');
+                });
+            } catch (error) {
+                console.error(error);
+                unidadeSelect.innerHTML = '<option value="">Erro ao carregar</option>';
+                responsavelSelect.innerHTML = '<option value="">Erro ao carregar</option>';
+                alert('Erro ao carregar dados do inventario:\n' + error.message);
+            }
+        }
+
+        function renderizarItens() {
+            var tbody = document.getElementById('itensInventarioBody');
+            var total = document.getElementById('totalItensInventario');
+            var valorTotal = document.getElementById('valorTotalInventario');
+            var soma = itensDoInventario.reduce(function (acumulado, item) {
+                return acumulado + Number(item.valor || 0);
+            }, 0);
+            tbody.innerHTML = '';
+            total.textContent = itensDoInventario.length + (itensDoInventario.length === 1 ? ' item encontrado' : ' itens encontrados');
+            valorTotal.textContent = moeda(soma) + ' em patrimonio';
+
+            if (itensDoInventario.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8">Nenhum item encontrado para a unidade e o periodo selecionados.</td></tr>';
                 return;
             }
-            alert('Inventário cadastrado com sucesso!');
-            window.location.href = 'inventarios.html';
+
+            itensDoInventario.forEach(function (item) {
+                var row = document.createElement('tr');
+                row.innerHTML = '<td>' + (item.numeroPatrimonio || '') + '</td>' +
+                    '<td>' + (item.descricao || '') + '</td>' +
+                    '<td>' + (item.departamento || '') + '</td>' +
+                    '<td>' + (item.responsavel || '') + '</td>' +
+                    '<td>' + (item.dataAquisicao || '') + '</td>' +
+                    '<td>' + moeda(item.valor) + '</td>' +
+                    '<td>' + (item.estado || '') + '</td>' +
+                    '<td>' + (item.statusPatrimonio || 'ATIVO') + '</td>';
+                tbody.appendChild(row);
+            });
         }
+
+        async function carregarItensDoPeriodo() {
+            var unidadeId = document.getElementById('unidadeInventario').value;
+            var dataInicio = document.getElementById('dataInventario').value;
+            var dataFim = document.getElementById('dataFimInventario').value;
+            var criterio = document.getElementById('criterioItensInventario');
+
+            itensDoInventario = [];
+            renderizarItens();
+
+            if (!unidadeId || !dataInicio || !dataFim) {
+                criterio.textContent = 'Selecione unidade, data inicial e data final para consultar os itens.';
+                return;
+            }
+
+            if (dataInicio > dataFim) {
+                criterio.textContent = 'A data inicial nao pode ser maior que a data final.';
+                return;
+            }
+
+            try {
+                criterio.textContent = 'Consultando itens de ' + dataInicio + ' ate ' + dataFim + '...';
+                var url = apiBaseUrl() + '/inventarios.php?itens=1&dataInicio=' + encodeURIComponent(dataInicio) +
+                    '&dataFim=' + encodeURIComponent(dataFim) +
+                    '&unidadeId=' + encodeURIComponent(unidadeId);
+                var response = await fetch(url);
+                var data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.message || 'Nao foi possivel consultar os itens.');
+                }
+
+                itensDoInventario = data.data || [];
+                criterio.textContent = 'Itens filtrados por data de aquisicao entre ' + dataInicio + ' e ' + dataFim + ' na unidade selecionada.';
+                renderizarItens();
+            } catch (error) {
+                console.error(error);
+                criterio.textContent = 'Erro ao consultar itens.';
+                alert('Erro ao consultar itens do inventario:\n' + error.message);
+            }
+        }
+
+        async function salvarInventario() {
+            var nome = document.getElementById('nomeInventario').value.trim();
+            var ano = document.getElementById('anoInventario').value;
+            var unidadeId = document.getElementById('unidadeInventario').value;
+            var responsavelId = document.getElementById('responsavelInventario').value;
+            var dataInicio = document.getElementById('dataInventario').value;
+            var dataFim = document.getElementById('dataFimInventario').value;
+            var status = document.getElementById('statusInventario').value;
+            var botao = document.querySelector('button[type="submit"]');
+            var usuario = usuarioLogado();
+
+            if (!nome || !ano || !unidadeId || !responsavelId || !dataInicio || !dataFim || !status) {
+                alert('Preencha todos os campos obrigatorios para cadastrar o inventario.');
+                return;
+            }
+
+            if (dataInicio > dataFim) {
+                alert('A data inicial nao pode ser maior que a data final.');
+                return;
+            }
+
+            var payload = {
+                nome: nome,
+                ano: ano,
+                unidadeId: unidadeId,
+                responsavelId: responsavelId,
+                dataInicio: dataInicio,
+                dataFim: dataFim,
+                status: status,
+                observacoes: document.getElementById('observacoesInventario').value.trim(),
+                usuarioId: usuario.id || null
+            };
+
+            try {
+                if (botao) {
+                    botao.disabled = true;
+                    botao.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+                }
+
+                var response = await fetch(apiBaseUrl() + '/inventarios.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                var data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.message || 'Nao foi possivel cadastrar o inventario.');
+                }
+
+                alert(data.message + '\nItens vinculados: ' + (data.itensVinculados || 0) + '\nValor total: ' + moeda(data.valorTotal));
+                window.location.href = 'inventarios.html';
+            } catch (error) {
+                console.error(error);
+                alert('Erro ao salvar inventario:\n' + error.message);
+            } finally {
+                if (botao) {
+                    botao.disabled = false;
+                    botao.innerHTML = '<i class="fas fa-save"></i> Salvar';
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var hoje = new Date();
+            var primeiroDiaAno = new Date(hoje.getFullYear(), 0, 1);
+            document.getElementById('anoInventario').value = hoje.getFullYear();
+            document.getElementById('dataInventario').value = primeiroDiaAno.toISOString().slice(0, 10);
+            document.getElementById('dataFimInventario').value = hoje.toISOString().slice(0, 10);
+            document.getElementById('statusInventario').value = 'ABERTO';
+            carregarSelects();
+        });
+        document.getElementById('dataInventario').addEventListener('change', carregarItensDoPeriodo);
+        document.getElementById('dataFimInventario').addEventListener('change', carregarItensDoPeriodo);
+        document.getElementById('unidadeInventario').addEventListener('change', carregarItensDoPeriodo);
     </script>
     <script src="js/main.js"></script>
-<script src="js/auth.js"></script>
+    <script src="js/auth.js"></script>
 </body>
 </html>
