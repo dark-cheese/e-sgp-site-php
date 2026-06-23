@@ -88,29 +88,36 @@
     <script>
         function contexto() { return new URLSearchParams(window.location.search); }
         async function carregarUnidades() {
-            const params = contexto();
+            const params = new URLSearchParams(window.location.search);
             const secretariaId = params.get('secretariaId');
             const tbody = document.getElementById('unidadeTableBody');
-            const response = await fetch(getApiBaseUrl() + '/unidades.php?secretariaId=' + encodeURIComponent(secretariaId));
-            const data = await response.json();
-            tbody.innerHTML = '';
-            if (!data.success || !data.data.length) {
-                tbody.innerHTML = '<tr><td colspan="6">Nenhuma unidade encontrada para a secretaria selecionada.</td></tr>';
-                return;
-            }
-            data.data.forEach(function (unidade) {
-                const tr = document.createElement('tr');
-                tr.innerHTML = '<td><i class="fas fa-school"></i> ' + (unidade.nome || '') + '</td>' +
-                    '<td>' + (unidade.secretaria || '') + '</td>' +
-                    '<td>' + (unidade.departamentos || 0) + '</td>' +
-                    '<td>' + (unidade.itens || 0) + '</td>' +
-                    '<td>' + (unidade.responsavel || 'Sem responsável') + '</td>' +
-                    '<td><button class="action-btn" type="button"><i class="fas fa-eye"></i></button></td>';
-                tr.querySelector('button').addEventListener('click', function () {
-                    window.location.href = 'departamentos.html?secretariaId=' + encodeURIComponent(secretariaId) + '&unidadeId=' + encodeURIComponent(unidade.id);
+            
+            try {
+                const response = await fetch(apiBaseUrl() + '/unidades.php?secretariaId=' + encodeURIComponent(secretariaId));
+                const data = await response.json();
+                tbody.innerHTML = '';
+                
+                if (!data.success || !data.data.length) {
+                    tbody.innerHTML = '<tr><td colspan="6">Nenhuma unidade encontrada para a secretaria selecionada.</td></tr>';
+                    return;
+                }
+                
+                data.data.forEach(function (unidade) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = 
+                        '<td><i class="fas fa-school"></i> ' + (unidade.nome || '') + '</td>' +
+                        '<td>' + (unidade.secretaria || '') + '</td>' +
+                        '<td>' + (unidade.departamentos || 0) + '</td>' +
+                        '<td>' + (unidade.itens || 0) + '</td>' +
+                        '<td>' + (unidade.responsavel || 'Sem responsável') + '</td>' +
+                        // ===== CORREÇÃO: Passa secretariaId E unidadeId =====
+                        '<td><button class="action-btn" onclick="window.location.href=\'departamentos.html?secretariaId=' + encodeURIComponent(secretariaId) + '&unidadeId=' + encodeURIComponent(unidade.id) + '\'"><i class="fas fa-eye"></i></button></td>';
+                    tbody.appendChild(tr);
                 });
-                tbody.appendChild(tr);
-            });
+            } catch (error) {
+                console.error('Erro ao carregar unidades:', error);
+                tbody.innerHTML = '<tr><td colspan="6">Erro ao carregar unidades.</td></tr>';
+            }
         }
         document.addEventListener('DOMContentLoaded', carregarUnidades);
     </script>
