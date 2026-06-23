@@ -20,9 +20,20 @@ if (!$conn) {
     exit;
 }
 
+// ============================================================
+// GET – LISTAR DEPARTAMENTOS
+// ============================================================
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     try {
         $unidadeId = isset($_GET['unidadeId']) ? (int)$_GET['unidadeId'] : 0;
+
+        /*
+         * LÓGICA DA CONSULTA:
+         * - Busca departamentos com JOINs para obter nome da unidade, secretaria e responsável
+         * - Subconsulta: conta quantos itens cada departamento possui
+         * - Se veio unidadeId, filtra por ele
+         * - Ordena por nome do departamento
+         */
         $query = "SELECT d.id, d.nome, d.unidadeId, d.responsavelId,
             u.nome AS unidade,
             u.secretariaId,
@@ -54,6 +65,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     exit;
 }
 
+// ============================================================
+// POST – CADASTRAR DEPARTAMENTO
+// ============================================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $input = json_decode(file_get_contents('php://input'), true);
     $nome = trim($input['nome'] ?? '');
@@ -71,17 +85,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
+        /*
+         * LÓGICA DO INSERT:
+         * - Insere novo departamento com nome, unidadeId e responsavelId (opcional)
+         * - Registra no histórico
+         */
         $query = 'INSERT INTO departamento (nome, unidadeId, responsavelId) VALUES (:nome, :unidadeId, :responsavelId)';
         $stmt = $conn->prepare($query);
         $stmt->bindValue(':nome', $nome, PDO::PARAM_STR);
         $stmt->bindValue(':unidadeId', $unidadeId, PDO::PARAM_INT);
-        if ($responsavelId !== null) {
-            $stmt->bindValue(':responsavelId', $responsavelId, PDO::PARAM_INT);
-        } else {
-            $stmt->bindValue(':responsavelId', null, PDO::PARAM_NULL);
-        }
+        $stmt->bindValue(':responsavelId', $responsavelId ?? null, PDO::PARAM_INT);
         $stmt->execute();
         $id = (int) $conn->lastInsertId();
+
         registrarHistorico(
             $conn,
             'CRIAR',

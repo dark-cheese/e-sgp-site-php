@@ -15,33 +15,36 @@ $database = new Database();
 $conn = $database->getConnection();
 
 if (!$conn) {
-    echo json_encode([
-        'success' => false,
-        'message' => 'Falha ao conectar com o banco de dados.'
-    ]);
+    echo json_encode(['success' => false, 'message' => 'Falha ao conectar com o banco de dados.']);
     exit;
 }
 
+// ============================================================
+// GET – LISTAR RESPONSÁVEIS
+// ============================================================
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     try {
+        /*
+         * LÓGICA DO SELECT:
+         * - Busca todos os responsáveis
+         * - LEFT JOIN com usuario para obter o email do usuário vinculado (se houver)
+         * - Ordena por nome
+         */
         $query = "SELECT r.id, r.nome, r.cargo, u.email AS email FROM responsavel r LEFT JOIN usuario u ON r.usuarioId = u.id ORDER BY r.nome";
         $stmt = $conn->prepare($query);
         $stmt->execute();
         $responsaveis = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        echo json_encode([
-            'success' => true,
-            'data' => $responsaveis
-        ]);
+        echo json_encode(['success' => true, 'data' => $responsaveis]);
     } catch (PDOException $e) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Erro ao buscar responsáveis: ' . $e->getMessage()
-        ]);
+        echo json_encode(['success' => false, 'message' => 'Erro ao buscar responsáveis: ' . $e->getMessage()]);
     }
     exit;
 }
 
+// ============================================================
+// POST – CADASTRAR RESPONSÁVEL
+// ============================================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $input = json_decode(file_get_contents('php://input'), true);
 
@@ -50,13 +53,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($input['email'] ?? '');
 
     if ($nome === '' || $cargo === '') {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Nome e cargo são obrigatórios para cadastrar o responsável.'
-        ]);
+        echo json_encode(['success' => false, 'message' => 'Nome e cargo são obrigatórios.']);
         exit;
     }
 
+    /*
+     * LÓGICA DO VÍNCULO COM USUÁRIO:
+     * - Se o email foi informado, tenta encontrar um usuário com esse email
+     * - Se encontrar, vincula o responsável a esse usuário (campo usuarioId)
+     * - Se não encontrar, cadastra o responsável sem vínculo com usuário
+     */
     $usuarioId = null;
     if ($email !== '') {
         try {
@@ -69,11 +75,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $usuarioId = (int)$usuario['id'];
             }
         } catch (PDOException $e) {
-            // Ignorar erro de usuário vinculado; vamos cadastrar apenas o responsavel.
+            // Ignora erro e cadastra sem vínculo
         }
     }
 
     try {
+        /*
+         * LÓGICA DO INSERT:
+         * - Se encontrou usuário, insere com usuarioId
+         * - Senão, insere sem usuarioId
+         */
         if ($usuarioId !== null) {
             $query = "INSERT INTO responsavel (nome, cargo, usuarioId) VALUES (:nome, :cargo, :usuarioId)";
         } else {
@@ -87,6 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         $stmt->execute();
         $id = (int) $conn->lastInsertId();
+
         registrarHistorico(
             $conn,
             'CRIAR',
@@ -96,23 +108,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             obterUsuarioIdDaRequisicao($input)
         );
 
-        echo json_encode([
-            'success' => true,
-            'message' => 'Responsável cadastrado com sucesso.',
-            'id' => $id
-        ]);
+        echo json_encode(['success' => true, 'message' => 'Responsável cadastrado com sucesso.', 'id' => $id]);
     } catch (PDOException $e) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Erro ao cadastrar responsável: ' . $e->getMessage()
-        ]);
+        echo json_encode(['success' => false, 'message' => 'Erro ao cadastrar responsável: ' . $e->getMessage()]);
     }
     exit;
 }
 
 http_response_code(405);
-echo json_encode([
-    'success' => false,
-    'message' => 'Método não permitido.'
-]);
-?>
+echo json_encode(['success' => false, 'message' => 'Método não permitido.']);

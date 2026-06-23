@@ -19,8 +19,18 @@ if (!$conn) {
     exit;
 }
 
+// ============================================================
+// GET – LISTAR HISTÓRICO
+// ============================================================
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     try {
+        /*
+         * LÓGICA DO SELECT:
+         * - Busca todos os registros de histórico
+         * - LEFT JOIN com usuario para obter o nome de quem executou a ação
+         * - Formata a data para o formato brasileiro (dd/mm/aaaa hh:mm)
+         * - Ordena do mais recente para o mais antigo (por dataRegistro e id)
+         */
         $query = "SELECT h.id, h.usuarioId, h.acao, h.tabelaAlvo, h.registroId, h.descricao,
             DATE_FORMAT(h.dataRegistro, '%d/%m/%Y %H:%i:%s') AS dataRegistro,
             u.nome AS usuario

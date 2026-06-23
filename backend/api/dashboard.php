@@ -15,23 +15,25 @@ $database = new Database();
 $conn = $database->getConnection();
 
 if (!$conn) {
-    echo json_encode([
-        'success' => false,
-        'message' => 'Falha ao conectar com o banco de dados.'
-    ]);
+    echo json_encode(['success' => false, 'message' => 'Falha ao conectar com o banco de dados.']);
     exit;
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     http_response_code(405);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Metodo nao permitido.'
-    ]);
+    echo json_encode(['success' => false, 'message' => 'Método não permitido.']);
     exit;
 }
 
+// ============================================================
+// GET – DADOS DO DASHBOARD
+// ============================================================
 try {
+    /*
+     * LÓGICA DA CONSULTA (totais):
+     * - Usa subconsultas para contar quantos registros existem em cada tabela principal
+     * - Isso dá uma visão geral do sistema: total de bens, secretarias, unidades, responsáveis
+     */
     $totaisQuery = "SELECT
         (SELECT COUNT(*) FROM item) AS totalBens,
         (SELECT COUNT(*) FROM secretaria) AS totalSecretarias,
@@ -42,6 +44,13 @@ try {
     $totaisStmt->execute();
     $totais = $totaisStmt->fetch(PDO::FETCH_ASSOC);
 
+    /*
+     * LÓGICA DA CONSULTA (secretarias por itens):
+     * - Lista todas as secretarias com a quantidade de itens que cada uma possui
+     * - Faz JOINs para percorrer: secretaria → unidade → departamento → item
+     * - Agrupa por secretaria e ordena pela quantidade de itens (decrescente) e nome
+     * - Isso cria um ranking das secretarias com mais bens
+     */
     $secretariasQuery = "SELECT
             s.id,
             s.nome,
@@ -57,6 +66,12 @@ try {
     $secretariasStmt->execute();
     $secretarias = $secretariasStmt->fetchAll(PDO::FETCH_ASSOC);
 
+    /*
+     * LÓGICA DA CONSULTA (últimos eventos):
+     * - Busca os últimos 5 registros do histórico para exibir na página inicial
+     * - Inclui o nome do usuário que executou a ação
+     * - Ordena do mais recente para o mais antigo
+     */
     $historicos = [];
     try {
         $historicosQuery = "SELECT
@@ -79,6 +94,7 @@ try {
         error_log('Erro ao carregar historico recente do dashboard: ' . $e->getMessage());
     }
 
+    // Monta e retorna a resposta
     echo json_encode([
         'success' => true,
         'data' => [
@@ -101,4 +117,3 @@ try {
         'message' => 'Erro ao carregar dashboard: ' . $e->getMessage()
     ]);
 }
-?>

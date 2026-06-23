@@ -16,10 +16,7 @@ require_once __DIR__ . '/../config/database.php';
 $data = json_decode(file_get_contents("php://input"));
 
 if (!isset($data->email) || !isset($data->senha)) {
-    echo json_encode([
-        "success" => false,
-        "message" => "E-mail e senha são obrigatórios!"
-    ]);
+    echo json_encode(["success" => false, "message" => "E-mail e senha são obrigatórios!"]);
     exit();
 }
 
@@ -30,13 +27,11 @@ $database = new Database();
 $db = $database->getConnection();
 
 if ($db === null) {
-    echo json_encode([
-        "success" => false,
-        "message" => "Erro ao conectar com o banco de dados. Tente novamente."
-    ]);
+    echo json_encode(["success" => false, "message" => "Erro ao conectar com o banco de dados."]);
     exit();
 }
 
+// Busca o usuário pelo email
 $stmt = $db->prepare("SELECT id, nome, email, senha FROM usuario WHERE email = :email LIMIT 1");
 $stmt->bindParam(':email', $email);
 $stmt->execute();
@@ -47,6 +42,12 @@ if (!$usuario) {
     exit();
 }
 
+/*
+ * LÓGICA DA VERIFICAÇÃO DE SENHA:
+ * - Primeiro tenta usar password_verify() (senha com hash)
+ * - Se falhar, tenta comparar diretamente (texto plano) – fallback para compatibilidade
+ * - Isso permite que senhas antigas (sem hash) ainda funcionem durante a migração
+ */
 $senhaValida = password_verify($senha, $usuario['senha']) || $senha === $usuario['senha'];
 
 if (!$senhaValida) {
@@ -54,6 +55,7 @@ if (!$senhaValida) {
     exit();
 }
 
+// Login bem-sucedido: retorna dados do usuário (sem a senha)
 echo json_encode([
     "success" => true,
     "message" => "Login realizado com sucesso!",
@@ -63,4 +65,3 @@ echo json_encode([
         "email" => $usuario['email']
     ]
 ]);
-?>

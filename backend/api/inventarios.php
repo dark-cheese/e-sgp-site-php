@@ -20,26 +20,29 @@ if (!$conn) {
     exit;
 }
 
+// ============================================================
+// FUNÇÕES AUXILIARES
+// ============================================================
+
+// Verifica se a coluna 'responsavelId' existe na tabela 'inventario' (para compatibilidade)
 function colunaExiste($conn, $tabela, $coluna) {
     $query = "SELECT COUNT(*)
         FROM INFORMATION_SCHEMA.COLUMNS
         WHERE TABLE_SCHEMA = DATABASE()
             AND TABLE_NAME = :tabela
             AND COLUMN_NAME = :coluna";
-
     $stmt = $conn->prepare($query);
     $stmt->bindValue(':tabela', $tabela, PDO::PARAM_STR);
     $stmt->bindValue(':coluna', $coluna, PDO::PARAM_STR);
     $stmt->execute();
-
     return (int)$stmt->fetchColumn() > 0;
 }
 
+// Adiciona a coluna responsavelId se não existir (evita erro em versões antigas)
 function garantirResponsavelNoInventario($conn) {
     if (colunaExiste($conn, 'inventario', 'responsavelId')) {
         return true;
     }
-
     try {
         $conn->exec("ALTER TABLE inventario ADD COLUMN responsavelId INTEGER NULL AFTER unidadeId");
         return true;
@@ -49,7 +52,16 @@ function garantirResponsavelNoInventario($conn) {
     }
 }
 
+// Busca itens de uma unidade dentro de um período (para pré-visualização e vinculação automática)
 function buscarItensDoInventario($conn, $dataInicio, $dataFim, $unidadeId) {
+    /*
+     * LÓGICA DO SELECT:
+     * - Busca itens de uma unidade específica, com data de aquisição entre dataInicio e dataFim
+     * - JOIN com departamento e unidade para obter os nomes
+     * - LEFT JOIN com responsável para obter nome do responsável
+     * - LEFT JOIN com baixa (última) para saber se o item foi baixado e seu status
+     * - Ordena por número de patrimônio
+     */
     $query = "SELECT i.id, i.numeroPatrimonio, i.descricao, i.estado, i.dataAquisicao, i.valor,
         d.nome AS departamento,
         u.nome AS unidade,
@@ -73,7 +85,6 @@ function buscarItensDoInventario($conn, $dataInicio, $dataFim, $unidadeId) {
     $stmt->bindValue(':dataInicio', $dataInicio, PDO::PARAM_STR);
     $stmt->bindValue(':dataFim', $dataFim, PDO::PARAM_STR);
     $stmt->execute();
-
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
@@ -84,6 +95,7 @@ function somarValorItens($itens) {
 }
 
 function buscarInventarioPorId($conn, $inventarioId, $temResponsavelInventario) {
+    // Monta a consulta com ou sem responsavelId, dependendo se a coluna existe
     $responsavelSelect = $temResponsavelInventario
         ? "i.responsavelId, r.nome AS responsavel,"
         : "NULL AS responsavelId, NULL AS responsavel,";
@@ -91,6 +103,12 @@ function buscarInventarioPorId($conn, $inventarioId, $temResponsavelInventario) 
         ? "LEFT JOIN responsavel r ON i.responsavelId = r.id"
         : "";
 
+    /*
+     * LÓGICA DO SELECT:
+     * - Busca um inventário específico pelo ID
+     * - Inclui contagem de itens vinculados e soma do valor total
+     * - Se a coluna responsavelId existir, busca também o responsável
+     */
     $query = "SELECT i.id, i.ano, i.nome, i.dataInicio, i.dataFim, i.status, i.unidadeId,
         $responsavelSelect
         u.nome AS unidade,
@@ -108,11 +126,16 @@ function buscarInventarioPorId($conn, $inventarioId, $temResponsavelInventario) 
     $stmt = $conn->prepare($query);
     $stmt->bindValue(':inventarioId', $inventarioId, PDO::PARAM_INT);
     $stmt->execute();
-
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
 function buscarItensVinculadosAoInventario($conn, $inventarioId) {
+    /*
+     * LÓGICA DO SELECT:
+     * - Busca todos os itens vinculados a um inventário (via tabela inventario_item)
+     * - Inclui dados do item: número patrimônio, descrição, etc.
+     * - Também inclui informações do departamento, unidade, responsável e status de baixa
+     */
     $query = "SELECT ii.id AS inventarioItemId, ii.localizado, ii.estado AS estadoInventario, ii.observacao,
         i.id, i.numeroPatrimonio, i.descricao, i.marca, i.modelo, i.numeroSerie, i.estado,
         i.dataAquisicao, i.valor, i.notaFiscal,
@@ -135,10 +158,12 @@ function buscarItensVinculadosAoInventario($conn, $inventarioId) {
     $stmt = $conn->prepare($query);
     $stmt->bindValue(':inventarioId', $inventarioId, PDO::PARAM_INT);
     $stmt->execute();
-
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
+// ============================================================
+// GET – LISTAR INVENTÁRIOS
+// ============================================================
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     try {
         $temResponsavelInventario = garantirResponsavelNoInventario($conn);
@@ -147,13 +172,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $dataInicio = trim($_GET['dataInicio'] ?? '');
         $dataFim = trim($_GET['dataFim'] ?? '');
 
+        // Caso 1: Buscar inventário específico pelo ID
         if ($inventarioId > 0) {
             $inventario = buscarInventarioPorId($conn, $inventarioId, $temResponsavelInventario);
             if (!$inventario) {
                 echo json_encode(['success' => false, 'message' => 'Inventario nao encontrado.']);
                 exit;
             }
-
             $itens = buscarItensVinculadosAoInventario($conn, $inventarioId);
             $inventario['itensVinculados'] = count($itens);
             $inventario['valorTotal'] = somarValorItens($itens);
@@ -170,17 +195,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             exit;
         }
 
+        // Caso 2: Buscar itens para pré-visualização (com data e unidade)
         if (isset($_GET['itens'])) {
             if ($dataInicio === '' || $dataFim === '' || $unidadeId <= 0) {
-                echo json_encode(['success' => false, 'message' => 'Data inicial, data final e unidade sao obrigatorias para buscar os itens do inventario.']);
+                echo json_encode(['success' => false, 'message' => 'Data inicial, data final e unidade são obrigatórias.']);
                 exit;
             }
-
             if ($dataInicio > $dataFim) {
-                echo json_encode(['success' => false, 'message' => 'A data inicial nao pode ser maior que a data final.']);
+                echo json_encode(['success' => false, 'message' => 'A data inicial não pode ser maior que a data final.']);
                 exit;
             }
-
             $itens = buscarItensDoInventario($conn, $dataInicio, $dataFim, $unidadeId);
             echo json_encode([
                 'success' => true,
@@ -191,6 +215,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             exit;
         }
 
+        // Caso 3: Listar todos os inventários
         $responsavelSelect = $temResponsavelInventario
             ? "i.responsavelId, r.nome AS responsavel,"
             : "NULL AS responsavelId, NULL AS responsavel,";
@@ -198,6 +223,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             ? "LEFT JOIN responsavel r ON i.responsavelId = r.id"
             : "";
 
+        /*
+         * LÓGICA DO SELECT:
+         * - Lista todos os inventários com contagem de itens e valor total
+         * - Inclui responsável se a coluna existir
+         * - Ordena por ano (mais recente) e nome
+         */
         $query = "SELECT i.id, i.ano, i.nome, i.dataInicio, i.dataFim, i.status, i.unidadeId,
             $responsavelSelect
             u.nome AS unidade,
@@ -222,6 +253,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     exit;
 }
 
+// ============================================================
+// POST – CADASTRAR INVENTÁRIO
+// ============================================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $input = json_decode(file_get_contents('php://input'), true);
     $nome = trim($input['nome'] ?? '');
@@ -232,19 +266,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $status = trim($input['status'] ?? '');
     $dataFim = trim($input['dataFim'] ?? '') ?: null;
 
+    // Validações...
     if ($nome === '' || $ano <= 0 || $unidadeId <= 0 || $responsavelId <= 0 || $dataInicio === null || $dataFim === null || $status === '') {
-        echo json_encode(['success' => false, 'message' => 'Nome, ano, periodo, unidade, responsavel e status sao obrigatorios.']);
+        echo json_encode(['success' => false, 'message' => 'Todos os campos são obrigatórios.']);
         exit;
     }
-
     if ($dataInicio > $dataFim) {
-        echo json_encode(['success' => false, 'message' => 'A data inicial nao pode ser maior que a data final.']);
+        echo json_encode(['success' => false, 'message' => 'A data inicial não pode ser maior que a data final.']);
         exit;
     }
-
     $status = strtoupper($status);
     if (!in_array($status, ['ABERTO', 'CONCLUIDO', 'SUSPENSO'])) {
-        echo json_encode(['success' => false, 'message' => 'Status invalido.']);
+        echo json_encode(['success' => false, 'message' => 'Status inválido.']);
         exit;
     }
 
@@ -252,6 +285,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $temResponsavelInventario = garantirResponsavelNoInventario($conn);
         $conn->beginTransaction();
 
+        /*
+         * LÓGICA DO INSERT (inventário):
+         * - Insere o inventário com os dados fornecidos
+         * - Se a coluna responsavelId existe, insere também
+         * - O ID é gerado automaticamente
+         */
         if ($temResponsavelInventario) {
             $query = 'INSERT INTO inventario (ano, nome, dataInicio, dataFim, status, unidadeId, responsavelId)
                 VALUES (:ano, :nome, :dataInicio, :dataFim, :status, :unidadeId, :responsavelId)';
@@ -259,7 +298,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $query = 'INSERT INTO inventario (ano, nome, dataInicio, dataFim, status, unidadeId)
                 VALUES (:ano, :nome, :dataInicio, :dataFim, :status, :unidadeId)';
         }
-
         $stmt = $conn->prepare($query);
         $stmt->bindValue(':ano', $ano, PDO::PARAM_INT);
         $stmt->bindValue(':nome', $nome, PDO::PARAM_STR);
@@ -273,7 +311,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute();
         $id = (int) $conn->lastInsertId();
 
+        // Busca os itens da unidade no período e vincula automaticamente
         $itens = buscarItensDoInventario($conn, $dataInicio, $dataFim, $unidadeId);
+
+        /*
+         * LÓGICA DO INSERT (inventario_item):
+         * - Para cada item encontrado no período, insere um registro na tabela inventario_item
+         * - Define localizado = TRUE (padrão), estado = estado atual do item, observação informativa
+         * - Isso cria o vínculo entre o inventário e os itens
+         */
         $itemInventarioStmt = $conn->prepare("INSERT INTO inventario_item (inventarioId, itemId, localizado, estado, observacao)
             VALUES (:inventarioId, :itemId, TRUE, :estado, :observacao)");
 
@@ -313,4 +359,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 http_response_code(405);
-echo json_encode(['success' => false, 'message' => 'Metodo nao permitido.']);
+echo json_encode(['success' => false, 'message' => 'Método não permitido.']);

@@ -27,6 +27,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 
 try {
     $departamentoId = isset($_GET['departamentoId']) ? (int) $_GET['departamentoId'] : 0;
+
+    /*
+     * LÓGICA DO SELECT:
+     * - Busca todas as localizações
+     * - Se veio departamentoId, filtra por ele (WHERE departamentoId = :departamentoId)
+     * - Ordena por nome
+     * - Usado para preencher o select de localização no formulário de cadastro de itens
+     */
     $query = "SELECT id, departamentoId, nome, descricao FROM localizacao";
 
     if ($departamentoId > 0) {
@@ -45,4 +53,3 @@ try {
 } catch (PDOException $e) {
     echo json_encode(['success' => false, 'message' => 'Erro ao buscar localizacoes: ' . $e->getMessage()]);
 }
-?>

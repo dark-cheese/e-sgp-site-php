@@ -1,4 +1,7 @@
 <?php
+// ============================================================
+// CONFIGURAÇÕES INICIAIS
+// ============================================================
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
@@ -20,8 +23,19 @@ if (!$conn) {
     exit;
 }
 
+// ============================================================
+// GET – LISTAR BAIXAS
+// ============================================================
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     try {
+        /*
+         * LÓGICA DO SELECT:
+         * - Busca todos os registros de baixa
+         * - LEFT JOIN com item para obter número de patrimônio, descrição e valor
+         * - LEFT JOIN com departamento, unidade e responsável para mostrar onde o item estava
+         * - Ordena pela data da baixa (mais recente primeiro)
+         * - Usado para listar todas as baixas na página de baixas
+         */
         $query = "SELECT b.id, b.itemId, b.tipo, b.dataBaixa, b.justificativa, b.documento,
             i.numeroPatrimonio AS itemNumero,
             i.descricao AS itemDescricao,
@@ -47,6 +61,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     exit;
 }
 
+// ============================================================
+// POST – REGISTRAR BAIXA
+// ============================================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $input = json_decode(file_get_contents('php://input'), true);
     $itemId = isset($input['itemId']) ? (int)$input['itemId'] : 0;
@@ -55,47 +72,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $justificativa = trim($input['justificativa'] ?? '');
     $documento = trim($input['documento'] ?? '') ?: null;
 
+    // ========== VALIDAÇÕES ==========
     if ($itemId <= 0) {
-        echo json_encode(['success' => false, 'message' => 'O item e obrigatorio.']);
+        echo json_encode(['success' => false, 'message' => 'O item é obrigatório.']);
         exit;
     }
 
     if (!in_array($tipo, ['DOACAO', 'INUTILIZACAO', 'PERDIDO', 'CADASTRAMENTO_INDEVIDO'])) {
-        echo json_encode(['success' => false, 'message' => 'Tipo de baixa invalido.']);
+        echo json_encode(['success' => false, 'message' => 'Tipo de baixa inválido.']);
         exit;
     }
 
     if ($dataBaixa === '') {
-        echo json_encode(['success' => false, 'message' => 'A data da baixa e obrigatoria.']);
+        echo json_encode(['success' => false, 'message' => 'A data da baixa é obrigatória.']);
         exit;
     }
 
     if ($justificativa === '') {
-        echo json_encode(['success' => false, 'message' => 'A justificativa e obrigatoria.']);
+        echo json_encode(['success' => false, 'message' => 'A justificativa é obrigatória.']);
         exit;
     }
 
     try {
+        // Verifica se o item existe
         $itemStmt = $conn->prepare("SELECT id, numeroPatrimonio, descricao FROM item WHERE id = :itemId LIMIT 1");
         $itemStmt->bindValue(':itemId', $itemId, PDO::PARAM_INT);
         $itemStmt->execute();
         $item = $itemStmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$item) {
-            echo json_encode(['success' => false, 'message' => 'Item nao encontrado.']);
+            echo json_encode(['success' => false, 'message' => 'Item não encontrado.']);
             exit;
         }
 
+        // Verifica se o item já foi baixado (consulta a última baixa)
         $baixaExistenteStmt = $conn->prepare("SELECT id, tipo FROM baixa WHERE itemId = :itemId ORDER BY id DESC LIMIT 1");
         $baixaExistenteStmt->bindValue(':itemId', $itemId, PDO::PARAM_INT);
         $baixaExistenteStmt->execute();
         $baixaExistente = $baixaExistenteStmt->fetch(PDO::FETCH_ASSOC);
 
         if ($baixaExistente) {
-            echo json_encode(['success' => false, 'message' => 'Este item ja esta desativado pela baixa ' . $baixaExistente['tipo'] . '.']);
+            echo json_encode(['success' => false, 'message' => 'Este item já está desativado pela baixa ' . $baixaExistente['tipo'] . '.']);
             exit;
         }
 
+        /*
+         * LÓGICA DO INSERT:
+         * - Insere o registro de baixa com itemId, tipo, data, justificativa e documento (opcional)
+         * - Não exclui o item, apenas registra a baixa para manter o histórico
+         * - O status "ativo" do item é determinado pela ausência de baixa (via LEFT JOIN na consulta de itens)
+         */
         $conn->beginTransaction();
 
         $query = 'INSERT INTO baixa (itemId, tipo, dataBaixa, justificativa, documento)
@@ -109,12 +135,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute();
         $id = (int)$conn->lastInsertId();
 
+        // Registra no histórico
         registrarHistorico(
             $conn,
             'CRIAR',
             'baixa',
             $id,
-            'Registrou baixa do patrimonio ' . $item['numeroPatrimonio'] . ' com tipo "' . $tipo . '".',
+            'Registrou baixa do patrimônio ' . $item['numeroPatrimonio'] . ' com tipo "' . $tipo . '".',
             obterUsuarioIdDaRequisicao($input)
         );
 
@@ -134,5 +161,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
+// Método não permitido
 http_response_code(405);
-echo json_encode(['success' => false, 'message' => 'Metodo nao permitido.']);
+echo json_encode(['success' => false, 'message' => 'Método não permitido.']);

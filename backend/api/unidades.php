@@ -20,9 +20,23 @@ if (!$conn) {
     exit;
 }
 
+// ============================================================
+// GET – LISTAR UNIDADES
+// ============================================================
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     try {
         $secretariaId = isset($_GET['secretariaId']) ? (int)$_GET['secretariaId'] : 0;
+
+        /*
+         * LÓGICA DA CONSULTA:
+         * - Busca todas as unidades
+         * - LEFT JOIN com secretaria para obter o nome da secretaria
+         * - LEFT JOIN com responsavel para obter o nome do responsável
+         * - Subconsulta: conta quantos departamentos tem cada unidade
+         * - Subconsulta: conta quantos itens existem nos departamentos da unidade (via JOIN item > departamento)
+         * - Se veio secretariaId, filtra por ele (WHERE)
+         * - Ordena pelo nome da unidade
+         */
         $query = "SELECT u.id, u.nome, u.endereco, u.secretariaId, u.responsavelId,
             s.nome AS secretaria,
             r.nome AS responsavel,
@@ -52,6 +66,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     exit;
 }
 
+// ============================================================
+// POST – CADASTRAR UNIDADE
+// ============================================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $input = json_decode(file_get_contents('php://input'), true);
     $nome = trim($input['nome'] ?? '');
@@ -70,18 +87,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
+        /*
+         * LÓGICA DO INSERT:
+         * - Insere nova unidade com nome, secretariaId, endereço (opcional) e responsavelId (opcional)
+         * - O ID é gerado automaticamente
+         * - Registra no histórico após o INSERT
+         */
         $query = 'INSERT INTO unidade (nome, secretariaId, endereco, responsavelId) VALUES (:nome, :secretariaId, :endereco, :responsavelId)';
         $stmt = $conn->prepare($query);
         $stmt->bindValue(':nome', $nome, PDO::PARAM_STR);
         $stmt->bindValue(':secretariaId', $secretariaId, PDO::PARAM_INT);
         $stmt->bindValue(':endereco', $endereco ?: null, PDO::PARAM_STR);
-        if ($responsavelId !== null) {
-            $stmt->bindValue(':responsavelId', $responsavelId, PDO::PARAM_INT);
-        } else {
-            $stmt->bindValue(':responsavelId', null, PDO::PARAM_NULL);
-        }
+        $stmt->bindValue(':responsavelId', $responsavelId ?? null, PDO::PARAM_INT);
         $stmt->execute();
         $id = (int) $conn->lastInsertId();
+
         registrarHistorico(
             $conn,
             'CRIAR',

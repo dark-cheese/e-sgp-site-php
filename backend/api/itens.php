@@ -20,7 +20,13 @@ if (!$conn) {
     exit;
 }
 
+// ============================================================
+// FUNÇÕES AUXILIARES (validação de permissão)
+// ============================================================
+
+// Verifica se o usuário pode cadastrar item no departamento informado
 function usuarioPodeCadastrarItemNoDepartamento($conn, $usuarioId, $departamentoId) {
+    // Se for admin ou gestor, tem acesso a tudo
     $usuarioStmt = $conn->prepare("SELECT tu.nome AS tipoUsuario
         FROM usuario u
         LEFT JOIN tipo_usuario tu ON u.tipoUsuarioId = tu.id
@@ -35,6 +41,7 @@ function usuarioPodeCadastrarItemNoDepartamento($conn, $usuarioId, $departamento
         return true;
     }
 
+    // Para usuários comuns, verifica se ele é responsável pelo departamento, unidade ou secretaria
     $responsavelStmt = $conn->prepare("SELECT id FROM responsavel WHERE usuarioId = :usuarioId LIMIT 1");
     $responsavelStmt->bindValue(':usuarioId', $usuarioId, PDO::PARAM_INT);
     $responsavelStmt->execute();
@@ -63,39 +70,51 @@ function usuarioPodeCadastrarItemNoDepartamento($conn, $usuarioId, $departamento
     return (bool) $acessoStmt->fetch(PDO::FETCH_ASSOC);
 }
 
+// Verifica se a localização pertence ao departamento informado
 function localizacaoPertenceAoDepartamento($conn, $localizacaoId, $departamentoId) {
     if ($localizacaoId === null) {
         return true;
     }
-
     $stmt = $conn->prepare("SELECT id FROM localizacao WHERE id = :localizacaoId AND departamentoId = :departamentoId LIMIT 1");
     $stmt->bindValue(':localizacaoId', $localizacaoId, PDO::PARAM_INT);
     $stmt->bindValue(':departamentoId', $departamentoId, PDO::PARAM_INT);
     $stmt->execute();
-
     return (bool) $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
+// Gera um número de patrimônio único (com tentativas para evitar duplicação)
 function gerarNumeroPatrimonio($conn) {
     for ($tentativa = 0; $tentativa < 10; $tentativa++) {
         $numeroPatrimonio = 'PATR' . date('ymdHis') . rand(10, 99);
-
         $stmt = $conn->prepare("SELECT id FROM item WHERE numeroPatrimonio = :numeroPatrimonio LIMIT 1");
         $stmt->bindValue(':numeroPatrimonio', $numeroPatrimonio, PDO::PARAM_STR);
         $stmt->execute();
-
         if (!$stmt->fetch(PDO::FETCH_ASSOC)) {
             return $numeroPatrimonio;
         }
     }
-
     return 'PATR' . substr(str_replace('.', '', uniqid('', true)), 0, 16);
 }
 
+// ============================================================
+// GET – LISTAR ITENS
+// ============================================================
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     try {
         $departamentoId = isset($_GET['departamentoId']) ? (int)$_GET['departamentoId'] : 0;
         $somenteAtivos = isset($_GET['ativos']) && (int)$_GET['ativos'] === 1;
+
+        /*
+         * LÓGICA DA CONSULTA:
+         * - Busca todos os itens com JOINs para obter:
+         *   - departamento, unidade, secretaria (via chaves estrangeiras)
+         *   - responsável, tipo de material
+         * - LEFT JOIN com baixa (usando subconsulta para pegar a ÚLTIMA baixa de cada item)
+         * - Calcula se o item está ativo (se NÃO tem baixa) e o status (ATIVO ou tipo da baixa)
+         * - Filtra por departamentoId se veio na URL
+         * - Opcionalmente filtra apenas ativos (b.id IS NULL)
+         * - Ordena por número de patrimônio
+         */
         $query = "SELECT i.id, i.numeroPatrimonio, i.descricao, i.marca, i.modelo, i.numeroSerie, i.estado,
             i.valor, i.notaFiscal, i.dataAquisicao, i.observacoes, i.departamentoId, i.localizacaoId, i.responsavelId, i.tipoMaterialId,
             d.nome AS departamento,
@@ -147,6 +166,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     exit;
 }
 
+// ============================================================
+// POST – CADASTRAR ITEM
+// ============================================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $input = json_decode(file_get_contents('php://input'), true);
     $descricao = trim($input['descricao'] ?? '');
@@ -163,40 +185,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $notaFiscal = trim($input['notaFiscal'] ?? '');
     $observacoes = trim($input['observacoes'] ?? '');
 
+    // Validações...
     if ($descricao === '') {
-        echo json_encode(['success' => false, 'message' => 'A descriÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o do item ÃƒÆ’Ã‚Â© obrigatÃƒÆ’Ã‚Â³ria.']);
+        echo json_encode(['success' => false, 'message' => 'A descrição do item é obrigatória.']);
         exit;
     }
-
     if ($tipoMaterialId <= 0) {
-        echo json_encode(['success' => false, 'message' => 'O tipo de material ÃƒÆ’Ã‚Â© obrigatÃƒÆ’Ã‚Â³rio.']);
+        echo json_encode(['success' => false, 'message' => 'O tipo de material é obrigatório.']);
         exit;
     }
-
     if ($estado === '') {
-        echo json_encode(['success' => false, 'message' => 'O estado do item ÃƒÆ’Ã‚Â© obrigatÃƒÆ’Ã‚Â³rio.']);
+        echo json_encode(['success' => false, 'message' => 'O estado do item é obrigatório.']);
         exit;
     }
-
     if ($departamentoId <= 0) {
-        echo json_encode(['success' => false, 'message' => 'O departamento e obrigatorio.']);
+        echo json_encode(['success' => false, 'message' => 'O departamento é obrigatório.']);
         exit;
     }
 
+    // Verifica permissão do usuário para cadastrar neste departamento
     $usuarioId = obterUsuarioIdDaRequisicao($input);
     if (!usuarioPodeCadastrarItemNoDepartamento($conn, $usuarioId, $departamentoId)) {
-        echo json_encode(['success' => false, 'message' => 'Voce nao tem acesso para cadastrar patrimonio neste departamento.']);
+        echo json_encode(['success' => false, 'message' => 'Você não tem acesso para cadastrar patrimônio neste departamento.']);
         exit;
     }
 
+    // Verifica se a localização pertence ao departamento
     if (!localizacaoPertenceAoDepartamento($conn, $localizacaoId, $departamentoId)) {
-        echo json_encode(['success' => false, 'message' => 'A localizacao selecionada nao pertence ao departamento informado.']);
+        echo json_encode(['success' => false, 'message' => 'A localização selecionada não pertence ao departamento informado.']);
         exit;
     }
 
     try {
+        // Gera número de patrimônio único
         $numeroPatrimonio = gerarNumeroPatrimonio($conn);
-        $query = "INSERT INTO item (numeroPatrimonio, descricao, marca, modelo, numeroSerie, estado, dataAquisicao, valor, notaFiscal, observacoes, departamentoId, localizacaoId, tipoMaterialId, responsavelId) VALUES (:numeroPatrimonio, :descricao, :marca, :modelo, :numeroSerie, :estado, :dataAquisicao, :valor, :notaFiscal, :observacoes, :departamentoId, :localizacaoId, :tipoMaterialId, :responsavelId)";
+
+        /*
+         * LÓGICA DO INSERT:
+         * - Insere o item com todos os dados fornecidos
+         * - O número de patrimônio é gerado automaticamente (PATR + timestamp + rand)
+         * - Os campos opcionais (marca, modelo, etc.) podem ser nulos
+         * - Registra no histórico
+         */
+        $query = "INSERT INTO item (numeroPatrimonio, descricao, marca, modelo, numeroSerie, estado, dataAquisicao, valor, notaFiscal, observacoes, departamentoId, localizacaoId, tipoMaterialId, responsavelId)
+            VALUES (:numeroPatrimonio, :descricao, :marca, :modelo, :numeroSerie, :estado, :dataAquisicao, :valor, :notaFiscal, :observacoes, :departamentoId, :localizacaoId, :tipoMaterialId, :responsavelId)";
 
         $stmt = $conn->prepare($query);
         $stmt->bindValue(':numeroPatrimonio', $numeroPatrimonio, PDO::PARAM_STR);
@@ -206,27 +238,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->bindValue(':numeroSerie', $numeroSerie ?: null, PDO::PARAM_STR);
         $stmt->bindValue(':estado', $estado, PDO::PARAM_STR);
         $stmt->bindValue(':dataAquisicao', $dataAquisicao, PDO::PARAM_STR);
-        if ($valor !== null) {
-            $stmt->bindValue(':valor', $valor, PDO::PARAM_STR);
-        } else {
-            $stmt->bindValue(':valor', null, PDO::PARAM_NULL);
-        }
+        $stmt->bindValue(':valor', $valor !== null ? $valor : null, PDO::PARAM_STR);
         $stmt->bindValue(':notaFiscal', $notaFiscal ?: null, PDO::PARAM_STR);
         $stmt->bindValue(':observacoes', $observacoes ?: null, PDO::PARAM_STR);
         $stmt->bindValue(':departamentoId', $departamentoId, PDO::PARAM_INT);
-        if ($localizacaoId !== null) {
-            $stmt->bindValue(':localizacaoId', $localizacaoId, PDO::PARAM_INT);
-        } else {
-            $stmt->bindValue(':localizacaoId', null, PDO::PARAM_NULL);
-        }
+        $stmt->bindValue(':localizacaoId', $localizacaoId ?? null, PDO::PARAM_INT);
         $stmt->bindValue(':tipoMaterialId', $tipoMaterialId, PDO::PARAM_INT);
-        if ($responsavelId !== null) {
-            $stmt->bindValue(':responsavelId', $responsavelId, PDO::PARAM_INT);
-        } else {
-            $stmt->bindValue(':responsavelId', null, PDO::PARAM_NULL);
-        }
+        $stmt->bindValue(':responsavelId', $responsavelId ?? null, PDO::PARAM_INT);
         $stmt->execute();
         $id = (int) $conn->lastInsertId();
+
         registrarHistorico(
             $conn,
             'CRIAR',
@@ -244,4 +265,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 http_response_code(405);
-echo json_encode(['success' => false, 'message' => 'MÃƒÆ’Ã‚Â©todo nÃƒÆ’Ã‚Â£o permitido.']);
+echo json_encode(['success' => false, 'message' => 'Método não permitido.']);
