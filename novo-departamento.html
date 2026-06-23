@@ -184,88 +184,86 @@
          * AUTO PREENCHE a Unidade se veio um unidadeId na URL
          */
         async function carregarOpcoesDepartamento() {
-    try {
-        const params = new URLSearchParams(window.location.search);
-        const secretariaIdParam = params.get('secretariaId');
-        const unidadeIdParam = params.get('unidadeId');
+            try {
+                // ===== OBTÉM PARÂMETROS DA URL =====
+                const params = new URLSearchParams(window.location.search);
+                const secretariaIdParam = params.get('secretariaId');
+                const unidadeIdParam = params.get('unidadeId');
 
-        const [unidadesResponse, responsaveisResponse] = await Promise.all([
-            fetch(apiBaseUrl() + '/unidades.php?secretariaId=' + encodeURIComponent(secretariaIdParam)),
-            fetch(apiBaseUrl() + '/responsaveis.php')
-        ]);
+                console.log('🔍 Carregando opções para novo departamento');
+                console.log('📌 secretariaIdParam:', secretariaIdParam);
+                console.log('📌 unidadeIdParam:', unidadeIdParam);
 
-        const unidadesData = await unidadesResponse.json();
-        const responsaveisData = await responsaveisResponse.json();
+                // ===== BUSCA DADOS =====
+                const [unidadesResponse, responsaveisResponse] = await Promise.all([
+                    fetch(apiBaseUrl() + '/unidades.php?secretariaId=' + encodeURIComponent(secretariaIdParam)),
+                    fetch(apiBaseUrl() + '/responsaveis.php')
+                ]);
 
-        const unidadeSelect = document.getElementById('unidade');
-        const responsavelSelect = document.getElementById('responsavel');
-        const infoUnidade = document.getElementById('infoUnidade');
-        const nomeUnidade = document.getElementById('nomeUnidade');
+                const unidadesData = await unidadesResponse.json();
+                const responsaveisData = await responsaveisResponse.json();
 
-        // Preenche unidades
-        if (unidadesData.success) {
-            unidadeSelect.innerHTML = '<option value="">Selecione uma unidade...</option>';
-            unidadesData.data.forEach(function (uni) {
-                const opt = document.createElement('option');
-                opt.value = uni.id;
-                opt.textContent = uni.nome;
-                unidadeSelect.appendChild(opt);
-            });
+                console.log('📌 unidadesData:', unidadesData);
 
-            // Auto preencher se tiver unidadeId
-            if (unidadeIdParam) {
-                const existe = unidadesData.data.some(u => String(u.id) === String(unidadeIdParam));
-                if (existe) {
-                    unidadeSelect.value = unidadeIdParam;
-                    // Mostrar info
-                    const unidade = unidadesData.data.find(u => String(u.id) === String(unidadeIdParam));
-                    if (unidade) {
-                        nomeUnidade.textContent = unidade.nome;
-                        infoUnidade.style.display = 'block';
+                const unidadeSelect = document.getElementById('unidade');
+                const responsavelSelect = document.getElementById('responsavel');
+                const infoUnidade = document.getElementById('infoUnidade');
+                const nomeUnidade = document.getElementById('nomeUnidade');
+
+                // ===== CARREGA UNIDADES =====
+                if (unidadesData.success && unidadesData.data.length > 0) {
+                    unidadeSelect.innerHTML = '<option value="">Selecione uma unidade...</option>';
+                    
+                    unidadesData.data.forEach(function (uni) {
+                        const opt = document.createElement('option');
+                        opt.value = uni.id;
+                        opt.textContent = uni.nome;
+                        unidadeSelect.appendChild(opt);
+                    });
+
+                    // ===== AUTO PREENCHER: Se veio um unidadeId na URL =====
+                    if (unidadeIdParam) {
+                        const existe = unidadesData.data.some(u => String(u.id) === String(unidadeIdParam));
+                        if (existe) {
+                            unidadeSelect.value = unidadeIdParam;
+                            console.log('✅ Unidade selecionada:', unidadeSelect.value);
+                            
+                            // Mostra a div informativa com o nome da unidade
+                            const unidade = unidadesData.data.find(u => String(u.id) === String(unidadeIdParam));
+                            if (unidade) {
+                                nomeUnidade.textContent = unidade.nome;
+                                infoUnidade.style.display = 'block';
+                                console.log('✅ Nome da unidade:', unidade.nome);
+                            }
+                        } else {
+                            console.warn('⚠️ Unidade ID não encontrado:', unidadeIdParam);
+                        }
                     }
-                    // unidadeSelect.disabled = true;
                 } else {
-                    console.warn('Unidade ID não encontrado:', unidadeIdParam);
+                    console.warn('⚠️ Nenhuma unidade encontrada para a secretaria', secretariaIdParam);
+                    unidadeSelect.innerHTML = '<option value="">Nenhuma unidade disponível</option>';
                 }
-            }
-        }
 
-        // Preenche responsáveis
-        if (responsaveisData.success) {
-            responsaveisData.data.forEach(function (resp) {
-                const opt = document.createElement('option');
-                opt.value = resp.id;
-                opt.textContent = resp.nome + (resp.cargo ? ' – ' + resp.cargo : '');
-                responsavelSelect.appendChild(opt);
-            });
-        }
-
-        // Atualiza breadcrumb
-        const breadcrumb = document.getElementById('breadcrumbVoltar');
-        if (unidadeIdParam && unidadesData.success) {
-            const unidade = unidadesData.data.find(u => String(u.id) === String(unidadeIdParam));
-            if (unidade) {
-                breadcrumb.textContent = unidade.nome;
-                breadcrumb.href = 'departamentos.html?secretariaId=' + encodeURIComponent(secretariaIdParam) + '&unidadeId=' + encodeURIComponent(unidadeIdParam);
-            }
-        } else {
-            breadcrumb.textContent = 'Unidades';
-            breadcrumb.href = 'unidades.html?secretariaId=' + encodeURIComponent(secretariaIdParam);
-        }
-
-    } catch (error) {
-        console.error('❌ Erro em carregarOpcoesDepartamento:', error);
-        alert('Erro ao carregar dados. Tente novamente.');
-    }
-}
+                // ===== CARREGA RESPONSÁVEIS =====
+                if (responsaveisData.success && responsaveisData.data.length > 0) {
+                    responsaveisData.data.forEach(function (resp) {
+                        const opt = document.createElement('option');
+                        opt.value = resp.id;
+                        opt.textContent = resp.nome + (resp.cargo ? ' – ' + resp.cargo : '');
+                        responsavelSelect.appendChild(opt);
+                    });
+                }
 
                 // ===== ATUALIZA BREADCRUMB =====
                 const breadcrumbVoltar = document.getElementById('breadcrumbVoltar');
-                if (unidadeIdParam) {
-                    const unidadeEncontrada = unidadesData.data.find(u => u.id == unidadeIdParam);
-                    if (unidadeEncontrada) {
-                        breadcrumbVoltar.textContent = unidadeEncontrada.nome;
+                if (unidadeIdParam && unidadesData.success) {
+                    const unidade = unidadesData.data.find(u => String(u.id) === String(unidadeIdParam));
+                    if (unidade) {
+                        breadcrumbVoltar.textContent = unidade.nome;
                         breadcrumbVoltar.href = 'departamentos.html?secretariaId=' + encodeURIComponent(secretariaIdParam) + '&unidadeId=' + encodeURIComponent(unidadeIdParam);
+                    } else {
+                        breadcrumbVoltar.textContent = 'Unidades';
+                        breadcrumbVoltar.href = 'unidades.html?secretariaId=' + encodeURIComponent(secretariaIdParam);
                     }
                 } else {
                     breadcrumbVoltar.textContent = 'Unidades';
@@ -273,7 +271,8 @@
                 }
 
             } catch (error) {
-                console.error('❌ Erro ao carregar opções:', error);
+                console.error('❌ Erro em carregarOpcoesDepartamento:', error);
+                alert('Erro ao carregar dados. Tente novamente.');
             }
         }
 
